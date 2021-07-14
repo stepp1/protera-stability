@@ -1,1 +1,1 @@
-# protera-stability
+# Predicting Protein Stability with ML
