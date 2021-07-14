@@ -1,7 +1,17 @@
 # Predicting Protein Stability with ML
 
+## EDA Results
+* Alignment Scores: Same as Hamming Distance.
+* Score per different metrics: length, uniqueness of aminoacids.
 
-## Papers used:
+## Preprocessing Pipeline
+1. Create batched dataloader for a given dataset. The batches must have the following form: `[(label, sequence), ...]`.
+2. Retrieve token embeddings for a batch of sequences.
+3. Reduce the token embeddings to sequence embeddings (average over sequence dimension).
+4. We have embeddings per sequence.
+
+
+## Papers used
 
 | Shorthand | Paper           | Dataset | Use  |
 |-----------|-----------------------------|---------|--------------|
