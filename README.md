@@ -1,8 +1,8 @@
 # Predicting Protein Stability with ML
 
 ## EDA Results
-* Alignment Scores: Same as Hamming Distance.
-* Score per different metrics: length, uniqueness of aminoacids.
+* Alignment Scores: Same as Hamming Distance but more versatile. Unfinished.
+* Score per different metric (length, uniqueness of aminoacids) 
 
 ## Preprocessing Pipeline
 1. Create batched dataloader for a given dataset. The batches must have the following form: `[(label, sequence), ...]`.
