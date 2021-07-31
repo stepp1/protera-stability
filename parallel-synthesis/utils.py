@@ -1,5 +1,5 @@
 from cuml.preprocessing import StandardScaler
-from cuml import PCA, I;
+from cuml import PCA, I;cd 
 import matplotlib.pyplot as plt
 
 
