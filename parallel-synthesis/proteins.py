@@ -126,7 +126,7 @@ class EmbeddingProtein1D:
         return token_embeddings
 
 
-    def generate_embeddings(self, file_prefix, save = False, kind = 'train', bs = 32, subset = None):
+    def generate_embeddings(self, file_prefix, save = False, kind = 'train', bs = 32, subset = None, data = None):
         """
         Generates sequence/token embeddings for a whole dataset.
         Can write the embeddings into a pickle file with the path_out argument.
@@ -149,7 +149,8 @@ class EmbeddingProtein1D:
                 A subset size of the train/test/val set
             
         """
-        self.data = self.data if self.data is not None and self.kind == kind \
+        self.data = data
+        self.data = self.data if self.data is None or self.kind != kind \
                               else self.open_func(self.data_path, file_prefix)[kind]
         self.kind = kind
     
@@ -171,7 +172,6 @@ class EmbeddingProtein1D:
             if len(batch_embeddings.shape) == 2:            
                 for (label, seq), emb in zip(batch, batch_embeddings):
                     i +=1  
-#                     print(i)
                     embeddings[seq] = emb
             else:
                 label, seq = zip(*batch)
@@ -188,7 +188,7 @@ class EmbeddingProtein1D:
         return embeddings
     
     
-    def generate_datasets(self, file_prefix, save_emb = False, kind = 'train', bs = 32, subset = None, load_embeddings = False, overwrite = False):
+    def generate_datasets(self, file_prefix, save_emb = False, kind = 'train', bs = 32, subset = None, load_embeddings = False, overwrite = False, data = None):
         """
         Generates sequence/token embeddings for a whole dataset.
         Can write the embeddings into a pickle file with the path_out argument.
@@ -217,8 +217,16 @@ class EmbeddingProtein1D:
         if subset:
             raise NotImplementedError(f"Subsets are not implemented yet")
             
+        self.data = data
         self.data = self.data if self.data is not None and self.kind == kind \
                               else self.open_func(self.data_path, file_prefix)[kind]
+        
+        if load_embeddings == False:
+            embeddings = self.generate_embeddings(file_prefix, save=save_emb, kind=kind, bs=bs, subset=subset) 
+            
+        else:
+            embeddings = self.open_embeddings(file_prefix, kind)
+        
         self.kind = kind
         
         h5_fname = (
@@ -229,10 +237,7 @@ class EmbeddingProtein1D:
         if Path(h5_fname).exists() and overwrite:
             raise ValueError(f"Dataset {h5_fname} exists.")
             
-        n_samples = len(self.data)
-                
-        embeddings = self.generate_embeddings(file_prefix, save=save_emb, kind=kind, bs=bs, subset=subset) \
-                    if load_embeddings == False else self.open_embeddings(file_prefix, kind)
+        n_samples = len(embeddings)
         
         emb_len = max([len(val) for val in embeddings.values()])
         
