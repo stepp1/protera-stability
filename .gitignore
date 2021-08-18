@@ -5,6 +5,7 @@ data/
 models/
 logs/
 lightning_logs/
+#letra-test jaja
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
