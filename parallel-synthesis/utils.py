@@ -1,11 +1,12 @@
+import matplotlib.pyplot as plt
+import pandas as pd
+
 from cuml.preprocessing import StandardScaler
 import cuml
-
-import pandas as pd
-import matplotlib.pyplot as plt
+import torch
 
 from proteins import EmbeddingProtein1D
-import torch
+
 
 def dim_reduction(X, y, strategy = 'PCA', n_components = 2, prefix = None, plot_viz = True, save_viz = False):
     valid_strats = ("PCA", "UMAP", "TSNE")
@@ -55,7 +56,7 @@ def open_func(base_path, prefix):
     return sets
 
 
-def load_dataset(data_path, kind = 'train', reduce = False, scale = True, to_torch = False):
+def load_dataset(data_path, kind = 'train', reduce = False, scale = True, to_torch = False, close_h5 = False):
     args_dict = {
         'model_name': 'esm1b_t33_650M_UR50S',
         'open_func': open_func,
@@ -85,4 +86,7 @@ def load_dataset(data_path, kind = 'train', reduce = False, scale = True, to_tor
         X = torch.from_numpy(X)
         y = torch.from_numpy(y)
         
+    if close_h5:
+        dset.close()
+        return X, y
     return X, y, dset

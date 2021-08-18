@@ -1,4 +1,3 @@
-from skorch.callbacks import Checkpoint, LRScheduler, EarlyStopping
 from skorch import NeuralNetRegressor
 
 import torch
@@ -6,20 +5,18 @@ from torch import nn
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score
+from joblib import dump
 
 scoring = "r2"
 score = r2_score
 
-def perform_search(model, params, name, strategy = "grid", save_dir = "models"):
-    
-    
+def perform_search(X, y, model, params, name, strategy = "grid", save_dir = "models"):
     if strategy == "grid":
         searcher = GridSearchCV
         
     elif strategy == "bayes":
         raise NotImplementedError
         
-    
     search = searcher(
         estimator=model,
         param_grid=params,
@@ -31,13 +28,13 @@ def perform_search(model, params, name, strategy = "grid", save_dir = "models"):
     
     print("============")
     print(f'Fitting model {name}...')
-    grid.fit(X_train, y_train)
-    print(name, grid.best_score_)
-    print(grid.best_params_)
+    search.fit(X, y)
+    print(f"{name} best R2: {search.best_score_}")
+    print(f"Best params: {search.best_params_}")
     print("============")
     
     if "sklearn" in str(type(model)):
-        dump(grid, f"{save_dir}/best_{name}.joblib")
+        dump(search, f"{save_dir}/best_{name}.joblib")
         
     else: 
         # this assumes we're using skorch
