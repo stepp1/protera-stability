@@ -88,6 +88,7 @@ class SubsetDiversitySampler(Sampler):
             self.cutoff_lambda = lambda x, cutoff : x > cutoff
             
         self.stopped_by = self.subset_by_cutoff(self.cutoff, self.cutoff_lambda)
+        self.stopped_by_bin = 1 if self.stopped_by == "CUTOFF" else 0
         
         
     def subset_by_cutoff(self, cutoff, cutoff_func) -> None:
@@ -96,10 +97,10 @@ class SubsetDiversitySampler(Sampler):
         for row in self.diversity_data.itertuples():
             is_cutoff = cutoff_func(row.diversity, cutoff)
             if is_cutoff:
-                stopped_by = "cutoff"
+                stopped_by = "CUTOFF"
                 break
             elif len(indices) >= self.max_size:
-                stopped_by = "max size reached"
+                stopped_by = "MAX SIZE REACHED"
                 break
             else:
                 indices.append(row.Index)
