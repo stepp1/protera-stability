@@ -16,11 +16,6 @@ import h5py
 import sys
 
 
-class AttrDict(dict):
-    def __init__(self, *args, **kwargs):
-        super(AttrDict, self).__init__(*args, **kwargs)
-        self.__dict__ = self
-
 class EmbeddingProtein1D:
     """
     Embedding Extractor for 1D protein sequences.

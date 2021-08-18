@@ -7,7 +7,12 @@ import pandas as pd
 import numpy as np
 import h5py
 import dill
-        
+
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
 class ProteinStabilityDataset(Dataset):
     """Protein1D Stability Dataset."""
 
@@ -55,6 +60,7 @@ class SubsetDiversitySampler(Sampler):
             set_indices (list): list of dataset indices
             diversity_path (string): Path to the csv with sequences and diversity.
             diversity_cutoff (float): value for a diversity cutoff
+            max_size (int): maximum sample size
             strategy (str): Maximize or minize diversity. Default "maximize"
             seed (int): random seed. Default 123
         """
