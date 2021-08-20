@@ -1,11 +1,14 @@
-# Steps
-data/
+# custom ignore:
 .ipynb_checkpoints/
 .vscode/
+data/
 models/
 logs/
 lightning_logs/
-#letra-test jaja
+
+dropbox_uploader.sh 
+*.tar.gz
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
