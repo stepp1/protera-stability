@@ -6,6 +6,7 @@ from torch import nn
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score
 from joblib import dump
+import copy
 
 scoring = "r2"
 score = r2_score
@@ -43,13 +44,24 @@ def perform_search(X, y, model, params, name, strategy="grid", save_dir="models"
 
     return search
 
-
 class ProteinMLP(nn.Module):
-    def __init__(self, n_in=1280, n_units=1024, act=None, drop_p=0.7, last_drop=False):
+    def __init__(self, n_in=1280, n_units=1024, n_layers=3, act=None, drop_p=0.7, last_drop=False):
         super(ProteinMLP, self).__init__()
-        self.fc1 = nn.Linear(n_in, n_units)
-        self.fc2 = nn.Linear(n_units, n_units // 2)
-        self.fc3 = nn.Linear(n_units // 2, 1)
+
+        layers = []
+        for i in range(n_layers):
+            in_feats = n_in if i == 0 else n_units // i
+            if i == 0:
+                in_feats = n_in
+                out_feats = n_units
+            else:
+                in_feats = out_feats
+                out_feats = in_feats // 2
+            
+            out_feats = 1 if i == (n_layers - 1) else out_feats
+            fc = nn.Linear(in_feats, out_feats)
+            layers.append(fc)
+        self.layers = nn.ModuleList(layers)
 
         self.drop = nn.Dropout(p=drop_p)
         self.last_drop = last_drop
@@ -58,10 +70,14 @@ class ProteinMLP(nn.Module):
             self.act = nn.LeakyReLU()
 
     def forward(self, x):
-        out = self.act(self.drop(self.fc1(x)))
-        out = self.act(self.drop(self.fc2(out)))
-        out = self.fc3(out)
+        out = x
+        for i, layer in enumerate(self.layers):
+            out = layer(out)
+            if i == len(self.layers) - 1:
+                continue
+            else:
+                out = self.act(self.drop(out))
 
         if self.last_drop:
             out = self.drop(out)
-        return self.act(out)
+        return out
