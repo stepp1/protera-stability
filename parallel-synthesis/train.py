@@ -1,9 +1,9 @@
 from typing import List, Sized, Iterator
 import sys
 
-
 import torch
 from torch.nn import functional as F
+from sklearn.preprocessing import StandardScaler
 
 import fsspec  # imported first because of pl import error
 
@@ -74,21 +74,21 @@ class LitProteins(pl.LightningModule):
         self.epoch_log(avg_loss, "valid")
 
     def configure_optimizers(self):
-        optimizer = self.conf["optimzer"]["object"](
-            self.model.parameters(), lr=self.conf["optimzer"]["lr"]
+        optimizer = self.conf["optimizer"]["object"](
+            self.model.parameters(), **self.conf["optimizer"]["params"]
         )
 
         schedulers = [
             (sched["object"](optimizer, **sched["params"]), sched["name"])
-            for sched in self.conf["optimzer"]["schedulers"]
+            for sched in self.conf["optimizer"]["schedulers"]
         ]
 
         lr_schedulers = []
-        for schedule in schedulers:
+        for schedule, name in schedulers:
             scheduler_dict = {
                 "scheduler": schedule,
                 "monitor": "valid_loss_epoch",
-                "name": schedule.__name__,
+                "name": name,
             }
             lr_schedulers.append(scheduler_dict)
 
@@ -109,8 +109,16 @@ class ProteinStabilityDataset(torch.utils.data.Dataset):
 
         with h5py.File(str(self.stability_path), "r") as dset:
             self.sequences = dset["sequences"][:]
-            self.X = dset["embeddings"][:]
-            self.y = dset["labels"][:]
+            X = dset["embeddings"][:]
+            y = dset["labels"][:]
+
+            scaler = StandardScaler()
+            scaler.fit(X)
+            self.X = scaler.transform(X)
+
+            scaler = StandardScaler()
+            scaler.fit(y.reshape(-1, 1))
+            self.y = scaler.transform(y.reshape(-1, 1)).reshape(-1)
 
         self.indices = list(range(len(self.X)))
 
