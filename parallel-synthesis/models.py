@@ -10,13 +10,14 @@ from joblib import dump
 scoring = "r2"
 score = r2_score
 
-def perform_search(X, y, model, params, name, strategy = "grid", save_dir = "models"):
+
+def perform_search(X, y, model, params, name, strategy="grid", save_dir="models"):
     if strategy == "grid":
         searcher = GridSearchCV
-        
+
     elif strategy == "bayes":
         raise NotImplementedError
-        
+
     search = searcher(
         estimator=model,
         param_grid=params,
@@ -25,43 +26,42 @@ def perform_search(X, y, model, params, name, strategy = "grid", save_dir = "mod
         n_jobs=-1,
         refit=True,
     )
-    
+
     print("============")
-    print(f'Fitting model {name}...')
+    print(f"Fitting model {name}...")
     search.fit(X, y)
     print(f"{name} best R2: {search.best_score_}")
     print(f"Best params: {search.best_params_}")
     print("============")
-    
+
     if "sklearn" in str(type(model)):
         dump(search, f"{save_dir}/best_{name}.joblib")
-        
-    else: 
-        # this assumes we're using skorch
+
+    else:
+        # this assumes we're using skorch
         torch.save(search.state_dict(), f"{save_dir}/best_{name}.pt")
-        
+
     return search
 
 
-class ProteinMLP(nn.Module):    
-    def __init__(self, n_in = 1280, n_units = 1024, act = None, drop_p = 0.7, last_drop = False):
+class ProteinMLP(nn.Module):
+    def __init__(self, n_in=1280, n_units=1024, act=None, drop_p=0.7, last_drop=False):
         super(ProteinMLP, self).__init__()
         self.fc1 = nn.Linear(n_in, n_units)
-        self.fc2 = nn.Linear(n_units, n_units//2)
-        self.fc3 = nn.Linear(n_units//2, 1)
-        
-        
+        self.fc2 = nn.Linear(n_units, n_units // 2)
+        self.fc3 = nn.Linear(n_units // 2, 1)
+
         self.drop = nn.Dropout(p=drop_p)
         self.last_drop = last_drop
         self.act = act
         if act is None:
             self.act = nn.LeakyReLU()
-            
+
     def forward(self, x):
         out = self.act(self.drop(self.fc1(x)))
         out = self.act(self.drop(self.fc2(out)))
         out = self.fc3(out)
-        
-        if self.last_drop: 
+
+        if self.last_drop:
             out = self.drop(out)
         return self.act(out)
