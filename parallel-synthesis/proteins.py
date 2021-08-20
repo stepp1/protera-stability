@@ -148,7 +148,7 @@ class EmbeddingProtein1D:
             
         """
         self.data = data
-        self.data = self.data if self.data is None or self.kind != kind \
+        self.data = self.data if self.data is not None \
                               else self.open_func(self.data_path, file_prefix)[kind]
         self.kind = kind
     
@@ -216,7 +216,7 @@ class EmbeddingProtein1D:
             raise NotImplementedError(f"Subsets are not implemented yet")
             
         self.data = data
-        self.data = self.data if self.data is not None and self.kind == kind \
+        self.data = self.data if self.data is not None \
                               else self.open_func(self.data_path, file_prefix)[kind]
         
         if load_embeddings == False:
