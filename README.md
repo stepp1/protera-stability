@@ -53,7 +53,7 @@
 |    Shorthand   |             Paper           |      Dataset     |     Description      |    Use    |
 |----------------|-----------------------------|------------------|----------------------|-----------|
 | parallel       | [Rocklin et al. 2017](https://doi.org/10.1126/science.aan0693)  |    -  | 1D Protein Sequences with the custom stability scores(?).                 | Input Data to ESM1-b |
-| mutagenesis    | [Høie et al. 2021](https://doi.org/10.1101/2021.06.26.450037)   |    -  | 1D Protein Sequences with their ddG values annotated by Rosseta variants. | Input Data to ESM1-b + Transfer Learning |
+| mutagenesis    | [Høie et al. 2021](https://doi.org/10.1101/2021.06.26.450037)   |    -  | 1D Protein Sequences with their ddG values annotated by Rosseta.          | Input Data to ESM1-b + Transfer Learning |
 | ESM-1b         | [Rives et al. 2019](https://doi.org/10.1101/622803)             | UR50  | Pretrained SOTA general-purpose protein language model. Can be used to predict structure, function and other protein properties directly from individual sequences. | We pass protein sequences as input and extract embeddings that are used as feature descriptors. We attempt to train one or more models that can predict protein stability. |
-| MSA Transformer| [Rao et al. 2021]https://doi.org/10.1101/2021.02.12.430858 )    |    -  | TODO | They report improved results when maximizing diversity as Hamming Distance. |
+| MSA Transformer| [Rao et al. 2021]https://doi.org/10.1101/2021.02.12.430858 )    |    -  | TODO                                                                      | They report improved results when maximizing diversity as Hamming Distance. |
 
