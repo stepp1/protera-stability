@@ -9,6 +9,7 @@ lightning_logs/
 dropbox_uploader.sh 
 *.tar.gz
 *.zip
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
