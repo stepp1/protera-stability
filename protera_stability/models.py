@@ -44,8 +44,11 @@ def perform_search(X, y, model, params, name, strategy="grid", save_dir="models"
 
     return search
 
+
 class ProteinMLP(nn.Module):
-    def __init__(self, n_in=1280, n_units=1024, n_layers=3, act=None, drop_p=0.7, last_drop=False):
+    def __init__(
+        self, n_in=1280, n_units=1024, n_layers=3, act=None, drop_p=0.7, last_drop=False
+    ):
         super(ProteinMLP, self).__init__()
 
         layers = []
@@ -57,7 +60,7 @@ class ProteinMLP(nn.Module):
             else:
                 in_feats = out_feats
                 out_feats = in_feats // 2
-            
+
             out_feats = 1 if i == (n_layers - 1) else out_feats
             fc = nn.Linear(in_feats, out_feats)
             layers.append(fc)

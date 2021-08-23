@@ -1,14 +1,14 @@
-from typing import List, Sized, Iterator
+from typing import Iterator
 import sys
 
 import torch
 from torch.nn import functional as F
-from sklearn.preprocessing import StandardScaler
+import torchmetrics
 
 import fsspec  # imported first because of pl import error
 
 import pytorch_lightning as pl
-import torchmetrics
+from sklearn import preprocessing
 import pandas as pd
 import numpy as np
 import h5py
@@ -98,7 +98,7 @@ class LitProteins(pl.LightningModule):
 class ProteinStabilityDataset(torch.utils.data.Dataset):
     """Protein1D Stability Dataset."""
 
-    def __init__(self, proteins_path, ret_dict=True):
+    def __init__(self, proteins_path, ret_dict=False):
         """
         Args:
             proteins_path (string): Path to the H5Py file that contains sequences and embeddings.
@@ -106,19 +106,16 @@ class ProteinStabilityDataset(torch.utils.data.Dataset):
         """
         self.stability_path = proteins_path
         self.ret_dict = ret_dict
+        self.x_scaler = preprocessing.StandardScaler()
+        self.y_scaler = preprocessing.StandardScaler()
 
         with h5py.File(str(self.stability_path), "r") as dset:
             self.sequences = dset["sequences"][:]
             X = dset["embeddings"][:]
             y = dset["labels"][:]
 
-            scaler = StandardScaler()
-            scaler.fit(X)
-            self.X = scaler.transform(X)
-
-            scaler = StandardScaler()
-            scaler.fit(y.reshape(-1, 1))
-            self.y = scaler.transform(y.reshape(-1, 1)).reshape(-1)
+            self.X = self.x_scaler.fit_transform(X)
+            self.y = self.y_scaler.fit_transform(y.reshape(-1, 1)).reshape(y.shape)
 
         self.indices = list(range(len(self.X)))
 

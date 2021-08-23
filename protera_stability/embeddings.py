@@ -1,61 +1,52 @@
-from pathlib import Path
+import pathlib
 import pickle as pkl
-import random
-import os
-
-import torch
-from torch.utils.data import Sampler, DataLoader, SubsetRandomSampler, Dataset
-from typing import List, Sized, Iterator
-
-import esm
-
-from tqdm import tqdm
-import pandas as pd
-import numpy as np
-import h5py
 import sys
+from pathlib import Path
+from typing import List, Union
+
+import h5py
+import numpy as np
+import pandas as pd
+import torch
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 
-class EmbeddingProtein1D:
+class EmbeddingExtractor1D:
     """
     Embedding Extractor for 1D protein sequences.
     """
 
-    def __init__(self, model_name, open_func, data_path, gpu=False):
+    def __init__(self, model_name, open_func, base_path, gpu=False):
         """
         Constructor.
 
         Arguments:
         ---------
             model_name : str
-                Can be one of the ESM models
+                Must be one of the ESM pretrained models.
 
-            open_func : callable
-                A callable function that loads the data into a train/test/val dictionary
-
-            data_path: str or pathlib.Path
-                The data's base path
+            base_path : str or pathlib.Path
+                The data's base path.
 
             gpu : bool
                 Whether to move the model to cuda.
-
         """
 
         self.model, self.alphabet = torch.hub.load("facebookresearch/esm", model_name)
         self.batch_converter = self.alphabet.get_batch_converter()
-        self.open_func = open_func
-        self.data_path = data_path
+        self.base_path = base_path
         self.data = None
         self.gpu = gpu
-        self.kind = None
+
         if self.gpu:
             self.model.cuda()
 
-    def open_embeddings(self, prefix, kind):
+    def open_embeddings(self, filename):
         """
         Opens a binary pkl file with the precomputed embeddings.
         """
-        fname = self.data_path / f"{prefix}_embeddings_{kind}.pkl"
+        fname = self.data_path / f"{filename}.pkl"
         return pkl.load(open(fname, "rb"))
 
     def predict(self, sequence):
@@ -65,11 +56,11 @@ class EmbeddingProtein1D:
         Arguments:
         ---------
             sequence: str
-                An aminoacid sequence
+                An aminoacid sequence.
 
         Returns:
         -------
-            predictions : dict
+            predictions : dict.
         """
         # only one sequence
         if np.array(sequence).shape == ():
@@ -93,13 +84,13 @@ class EmbeddingProtein1D:
         Arguments:
         ---------
             sequence: str
-                An aminoacid sequence
+                An aminoacid sequence.
             sequence_emb: bool
-                Whether to reduce the token embeddings to obtain a sequence embedding
+                Whether to reduce the token embeddings to obtain a sequence embedding.
 
         Returns:
         -------
-            sequence_embeddings/token_embeddings: str/list
+            sequence_embeddings/token_embeddings: str/list.
         """
         results = self.predict(sequence)
 
@@ -125,40 +116,46 @@ class EmbeddingProtein1D:
         return token_embeddings
 
     def generate_embeddings(
-        self, file_prefix, save=False, kind="train", bs=32, subset=None, data=None
-    ):
+        self,
+        files: List[Union(str, pathlib.Path)],
+        path_out: Union(str, pathlib.Path) = None,
+        bs: int = 32,
+        subset: float = None,
+        data: pd.DataFrame = None,
+    ) -> None:
         """
         Generates sequence/token embeddings for a whole dataset.
         Can write the embeddings into a pickle file with the path_out argument.
 
         Arguments:
         ---------
-            file_prefix : str, pathlib.Path
-                A file prefix to load certain files from the data_path
+            files : List[Union(str, pathlib.Path)]
+                A list of files .csv from the base_path to load.
+                The files must contain two columns:  `labels` and `sequences`.
 
-            path_out : bool
-                Whether to save the embeddings to a pickle file
-
-            kind: str
-                One of train/test/val sets
+            path_out : Union(str, pathlib.Path)
+                Filename to pickle the embeddings into.
 
             bs: int
-                The dataloader batch size
+                The dataloader batch size.
 
-            subset: int
-                A subset size of the train/test/val set
+            subset: float
+                A percentage of the original data to use as subset.
+
+            data: pd.DataFrame
+                A DataFrame to use instead of loading data.
+                The files must contain two columns: `labels` and `sequences`.
 
         """
         self.data = data
         self.data = (
             self.data
             if self.data is not None
-            else self.open_func(self.data_path, file_prefix)[kind]
+            else pd.concat([pd.read_csv(self.base_path / file) for file in files])
         )
-        self.kind = kind
 
         if subset is not None:
-            random.choice(df.index)
+            # random.choice(df.index)
             raise NotImplementedError
 
         # batch the dataset and return a batch of the form [(label, seq), ...]
@@ -180,23 +177,24 @@ class EmbeddingProtein1D:
                 label, seq = zip(*batch)
                 embeddings[seq[0]] = batch_embeddings
 
-        if save:
-            out_fname = self.data_path / f"{file_prefix}_embeddings_{kind}.pkl"
+        if path_out is not None:
+            out_fname = self.base_path / f"{path_out}.pkl"
             pkl.dump(embeddings, open(out_fname, "wb"))
-            print(f"Embeddings saved to {out_fname}")
+            print(f"Embeddings saved to {out_fname}.pkl")
 
         return embeddings
 
     def generate_datasets(
         self,
-        file_prefix,
-        save_emb=False,
-        kind="train",
-        bs=32,
-        subset=None,
-        load_embeddings=False,
-        overwrite=False,
+        files: List[Union(str, pathlib.Path)],
+        h5_stem: str,
+        embedding_to_save: List[Union(str, pathlib.Path)] = None,
+        bs: int = 32,
+        subset: float = None,
+        embedding_files: List[Union(str, pathlib.Path)] = None,
+        overwrite: bool = False,
         data=None,
+        target_name: str = "",
     ):
         """
         Generates sequence/token embeddings for a whole dataset.
@@ -204,24 +202,37 @@ class EmbeddingProtein1D:
 
         Arguments:
         ---------
-            file_prefix : str, pathlib.Path
-                A file prefix to load certain files from the data_path
+            files : List[Union(str, pathlib.Path)]
+                A list of files .csv from the base_path to load.
+                The files must contain two columns:  `labels` and `sequences`.
 
-            save_emb : bool
-                Save precomputed embeddings
+            h5_stem : str
+                The stem to use for the generated dataset.
 
-            kind: str
-                One of train/test/val sets
+            embedding_to_save : Union(str, pathlib.Path)
+                Filename to save precomputed embeddings.
 
             bs: int
-                The dataloader batch size
+                The dataloader batch size.
 
-            subset: int
-                A subset size of the train/test/val set
+            subset: float
+                A percentage of the original data to use as subset.
 
-            load_embeddings : bool
-                Whether to load the embeddings from a file in the data_path.
-                It assumes that file a is binary pickle and the file name is f"{file_prefix}_embeddings.pkl"
+            embedding_files :  List[Union(str, pathlib.Path)]
+                A list of pickle files to load the embeddings from.
+                It assumes that file a is binary pickle.
+                Must be of same length than the .csv files
+
+            overwrite: bool
+                Whether to overwrite an existing h5 dataset.
+
+            data: pd.DataFrame
+                A DataFrame to use instead of loading data.
+                The files must contain two columns: `labels` and `sequences`.
+
+            target_name: str
+                What the label column represents.
+                This will be saved as an attrs of the h5.
         """
         if subset:
             raise NotImplementedError(f"Subsets are not implemented yet")
@@ -230,20 +241,24 @@ class EmbeddingProtein1D:
         self.data = (
             self.data
             if self.data is not None
-            else self.open_func(self.data_path, file_prefix)[kind]
+            else pd.concat([pd.read_csv(self.base_path / file) for file in files])
         )
 
-        if load_embeddings == False:
+        if embedding_files is None:
             embeddings = self.generate_embeddings(
-                file_prefix, save=save_emb, kind=kind, bs=bs, subset=subset
+                files,
+                path_out=None
+                if embedding_to_save is not None
+                else self.base_path / embedding_to_save,
+                bs=bs,
+                subset=subset,
+                data=data,
             )
 
         else:
-            embeddings = self.open_embeddings(file_prefix, kind)
+            embeddings = self.open_embeddings(embedding_files)
 
-        self.kind = kind
-
-        h5_fname = self.data_path / f"{file_prefix}_{kind}.h5"
+        h5_fname = self.data_path / f"{h5_stem}.h5"
 
         if Path(h5_fname).exists() and not overwrite:
             print("Returning existing dataset...", file=sys.stderr)
@@ -266,7 +281,7 @@ class EmbeddingProtein1D:
                 dtype=h5py.string_dtype(encoding="utf-8", length=None),
             )
 
-            dset_labels.attrs["target"] = file_prefix
+            dset_labels.attrs["target"] = target_name
             dset_labels[:] = self.data.labels
             dset_embeddings[:] = list(embeddings.values())
             dset_seqs[:] = self.data.sequence.astype(str)
