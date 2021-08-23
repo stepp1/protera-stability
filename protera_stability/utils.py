@@ -9,7 +9,13 @@ from embeddings import EmbeddingProtein1D
 
 
 def dim_reduction(
-    X, y=None, strategy="PCA", n_components=2, prefix=None, plot_viz=True, save_viz=False
+    X,
+    y=None,
+    strategy="PCA",
+    n_components=2,
+    prefix=None,
+    plot_viz=True,
+    save_viz=False,
 ):
     valid_strats = ("PCA", "UMAP", "TSNE")
     if strategy not in valid_strats:

@@ -117,8 +117,8 @@ class EmbeddingExtractor1D:
 
     def generate_embeddings(
         self,
-        files: List[Union(str, pathlib.Path)],
-        path_out: Union(str, pathlib.Path) = None,
+        files: List[Union[str, pathlib.Path]],
+        path_out: Union[str, pathlib.Path] = None,
         bs: int = 32,
         subset: float = None,
         data: pd.DataFrame = None,
@@ -129,11 +129,11 @@ class EmbeddingExtractor1D:
 
         Arguments:
         ---------
-            files : List[Union(str, pathlib.Path)]
+            files : List[Union[str, pathlib.Path]]
                 A list of files .csv from the base_path to load.
                 The files must contain two columns:  `labels` and `sequences`.
 
-            path_out : Union(str, pathlib.Path)
+            path_out : Union[str, pathlib.Path]
                 Filename to pickle the embeddings into.
 
             bs: int
@@ -186,12 +186,12 @@ class EmbeddingExtractor1D:
 
     def generate_datasets(
         self,
-        files: List[Union(str, pathlib.Path)],
+        files: List[Union[str, pathlib.Path]],
         h5_stem: str,
-        embedding_to_save: List[Union(str, pathlib.Path)] = None,
+        embedding_to_save: List[Union[str, pathlib.Path]] = None,
         bs: int = 32,
         subset: float = None,
-        embedding_files: List[Union(str, pathlib.Path)] = None,
+        embedding_files: List[Union[str, pathlib.Path]] = None,
         overwrite: bool = False,
         data=None,
         target_name: str = "",
@@ -202,14 +202,14 @@ class EmbeddingExtractor1D:
 
         Arguments:
         ---------
-            files : List[Union(str, pathlib.Path)]
+            files : List[Union[str, pathlib.Path]]
                 A list of files .csv from the base_path to load.
                 The files must contain two columns:  `labels` and `sequences`.
 
             h5_stem : str
                 The stem to use for the generated dataset.
 
-            embedding_to_save : Union(str, pathlib.Path)
+            embedding_to_save : Union[str, pathlib.Path]
                 Filename to save precomputed embeddings.
 
             bs: int
@@ -218,7 +218,7 @@ class EmbeddingExtractor1D:
             subset: float
                 A percentage of the original data to use as subset.
 
-            embedding_files :  List[Union(str, pathlib.Path)]
+            embedding_files :  List[Union[str, pathlib.Path]]
                 A list of pickle files to load the embeddings from.
                 It assumes that file a is binary pickle.
                 Must be of same length than the .csv files

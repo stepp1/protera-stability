@@ -25,7 +25,7 @@ class LitProteins(pl.LightningModule):
     """Training Protein Stability Regression Model"""
 
     # See for ddp: https://torchmetrics.readthedocs.io/en/latest/pages/lightning.html#logging-torchmetrics
-    def __init__(self, model, hparams):
+    def __init__(self, model: torch.nn.Module, hparams: dict):
         super(LitProteins, self).__init__()
         self.model = model
         self.r2 = torchmetrics.R2Score()
