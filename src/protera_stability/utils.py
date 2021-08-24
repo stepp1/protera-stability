@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-
-from cuml.preprocessing import StandardScaler
-import cuml
 import torch
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
 
-from embeddings import EmbeddingProtein1D
+from embeddings import EmbeddingExtractor1D
 
 
 def dim_reduction(
@@ -22,11 +22,12 @@ def dim_reduction(
         raise ValueError(f"{strategy} is not a valid dimensionality reduction strategy")
 
     if strategy == valid_strats[0]:
-        reducer = cuml.PCA(n_components=n_components)
+        reducer = PCA(n_components=n_components)
     elif strategy == valid_strats[1]:
-        reducer = cuml.UMAP(n_components=2)
+        raise NotImplementedError
+        # reducer = sklearn.decomposition.UMAP(n_components=2)
     elif strategy == valid_strats[2]:
-        reducer = cuml.PCA(n_components=2)
+        reducer = TSNE(n_components=2)
 
     X_hat = reducer.fit_transform(X, y)
 
@@ -39,6 +40,11 @@ def dim_reduction(
         cb = plt.colorbar(scatter, spacing="proportional")
         cb.set_label(prefix)
         plt.show()
+
+    if save_viz:
+        fname = f"{strategy}.png"
+        print(f"Saved as {fname}")
+        plt.savefig(fname, dpi=300)
 
     return X_hat
 
@@ -68,6 +74,7 @@ def open_train_test(base_path, prefix):
 def load_dataset_raw(
     data_path, kind="train", reduce=False, scale=True, to_torch=False, close_h5=True
 ):
+    raise NotImplementedError("This function hasn't been updated.")
     args_dict = {
         "model_name": "esm1b_t33_650M_UR50S",
         "open_func": open_train_test,
@@ -75,7 +82,7 @@ def load_dataset_raw(
         "gpu": False,
     }
 
-    emb_stabilty = EmbeddingProtein1D(**args_dict)
+    emb_stabilty = EmbeddingExtractor1D(**args_dict)
 
     dset = emb_stabilty.generate_datasets("stability", kind=kind, load_embeddings=True)
 
@@ -88,12 +95,10 @@ def load_dataset_raw(
 
     if scale:
         scaler = StandardScaler()
-        scaler.fit(X)
-        X = scaler.transform(X)
+        X = scaler.fit_transform(X)
 
         scaler = StandardScaler()
-        scaler.fit(y)
-        y = scaler.transform(y)
+        y = scaler.fit_transform(y)
 
     if to_torch:
         X = torch.from_numpy(X)

@@ -1,12 +1,10 @@
-from skorch import NeuralNetRegressor
+import copy
 
 import torch
-from torch import nn
-
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import r2_score
 from joblib import dump
-import copy
+from sklearn.metrics import r2_score
+from sklearn.model_selection import GridSearchCV
+from torch import nn
 
 scoring = "r2"
 score = r2_score

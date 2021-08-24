@@ -1,18 +1,15 @@
-from typing import Iterator
 import sys
-
-import torch
-from torch.nn import functional as F
-import torchmetrics
+from typing import Iterator
 
 import fsspec  # imported first because of pl import error
-
-import pytorch_lightning as pl
-from sklearn import preprocessing
-import pandas as pd
-import numpy as np
 import h5py
-import dill
+import numpy as np
+import pandas as pd
+import pytorch_lightning as pl
+import torch
+import torchmetrics
+from sklearn import preprocessing
+from torch.nn import functional as F
 
 
 class AttrDict(dict):
@@ -185,19 +182,20 @@ class SubsetDiversitySampler(torch.utils.data.Sampler):
         self.strategy = strategy
         self.seed = seed
 
-        if strategy == "maximize":
-            self.cutoff_lambda = lambda x, cutoff: x < cutoff
-        elif strategy == "minimize":
-            self.cutoff_lambda = lambda x, cutoff: x > cutoff
-
-        self.stopped_by = self.subset_by_cutoff(self.cutoff, self.cutoff_lambda)
+        self.stopped_by = self.subset_by_cutoff(self.cutoff, self.cutoff_func)
         self.stopped_by_bin = 1 if self.stopped_by == "CUTOFF" else 0
+
+    def cutoff_func(self, x, cutoff, strategy):
+        if strategy == "maximize":
+            return x < cutoff
+        elif strategy == "minimize":
+            return x > cutoff
 
     def subset_by_cutoff(self, cutoff, cutoff_func) -> None:
         stopped_by = ""
         indices = []
         for row in self.diversity_data.itertuples():
-            is_cutoff = cutoff_func(row.diversity, cutoff)
+            is_cutoff = cutoff_func(row.diversity, cutoff, self.strategy)
             if is_cutoff:
                 stopped_by = "CUTOFF"
                 break

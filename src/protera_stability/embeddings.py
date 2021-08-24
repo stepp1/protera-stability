@@ -2,13 +2,12 @@ import pathlib
 import pickle as pkl
 import sys
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, Union
 
 import h5py
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 
@@ -17,7 +16,7 @@ class EmbeddingExtractor1D:
     Embedding Extractor for 1D protein sequences.
     """
 
-    def __init__(self, model_name, open_func, base_path, gpu=False):
+    def __init__(self, model_name, base_path, gpu=False):
         """
         Constructor.
 
@@ -42,11 +41,11 @@ class EmbeddingExtractor1D:
         if self.gpu:
             self.model.cuda()
 
-    def open_embeddings(self, filename):
+    def open_embeddings(self, filename: str) -> Dict[str, np.ndarray]:
         """
         Opens a binary pkl file with the precomputed embeddings.
         """
-        fname = self.data_path / f"{filename}.pkl"
+        fname = self.base_path / f"{filename}.pkl"
         return pkl.load(open(fname, "rb"))
 
     def predict(self, sequence):
@@ -122,7 +121,7 @@ class EmbeddingExtractor1D:
         bs: int = 32,
         subset: float = None,
         data: pd.DataFrame = None,
-    ) -> None:
+    ) -> Dict[str, np.ndarray]:
         """
         Generates sequence/token embeddings for a whole dataset.
         Can write the embeddings into a pickle file with the path_out argument.
@@ -159,7 +158,7 @@ class EmbeddingExtractor1D:
             raise NotImplementedError
 
         # batch the dataset and return a batch of the form [(label, seq), ...]
-        dl = DataLoader(
+        dl = torch.utils.data.DataLoader(
             list(self.data.itertuples(index=False, name=None)),
             batch_size=bs,
             collate_fn=lambda batch: batch,
@@ -180,7 +179,7 @@ class EmbeddingExtractor1D:
         if path_out is not None:
             out_fname = self.base_path / f"{path_out}.pkl"
             pkl.dump(embeddings, open(out_fname, "wb"))
-            print(f"Embeddings saved to {out_fname}.pkl")
+            print(f"Embeddings saved to {out_fname}")
 
         return embeddings
 
@@ -191,11 +190,11 @@ class EmbeddingExtractor1D:
         embedding_to_save: List[Union[str, pathlib.Path]] = None,
         bs: int = 32,
         subset: float = None,
-        embedding_files: List[Union[str, pathlib.Path]] = None,
+        embedding_file: List[Union[str, pathlib.Path]] = None,
         overwrite: bool = False,
         data=None,
         target_name: str = "",
-    ):
+    ) -> h5py.Dataset:
         """
         Generates sequence/token embeddings for a whole dataset.
         Can write the embeddings into a pickle file with the path_out argument.
@@ -218,9 +217,9 @@ class EmbeddingExtractor1D:
             subset: float
                 A percentage of the original data to use as subset.
 
-            embedding_files :  List[Union[str, pathlib.Path]]
-                A list of pickle files to load the embeddings from.
-                It assumes that file a is binary pickle.
+            embedding_file :  Union[str, pathlib.Path]
+                A pickle file to load the embeddings from.
+                It assumes the file is a pickle binary.
                 Must be of same length than the .csv files
 
             overwrite: bool
@@ -244,7 +243,7 @@ class EmbeddingExtractor1D:
             else pd.concat([pd.read_csv(self.base_path / file) for file in files])
         )
 
-        if embedding_files is None:
+        if embedding_file is None:
             embeddings = self.generate_embeddings(
                 files,
                 path_out=None
@@ -256,9 +255,9 @@ class EmbeddingExtractor1D:
             )
 
         else:
-            embeddings = self.open_embeddings(embedding_files)
+            embeddings = self.open_embeddings(embedding_file)
 
-        h5_fname = self.data_path / f"{h5_stem}.h5"
+        h5_fname = self.base_path / f"{h5_stem}.h5"
 
         if Path(h5_fname).exists() and not overwrite:
             print("Returning existing dataset...", file=sys.stderr)
