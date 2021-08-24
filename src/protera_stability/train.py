@@ -47,10 +47,8 @@ class LitProteins(pl.LightningModule):
         self.log(f"{stage}_loss_step", loss, prog_bar=False, on_epoch=False)
 
     def epoch_log(self, avg_loss, stage):
-        self.log(f"{stage}_r2_epoch", self.r2.compute(), prog_bar=True)
-        self.log(
-            f"{stage}_loss_epoch", avg_loss, on_step=False, on_epoch=True, prog_bar=True
-        )
+        self.log(f"{stage}_r2", self.r2.compute(), prog_bar=True)
+        self.log(f"{stage}_loss", avg_loss, on_step=False, on_epoch=True, prog_bar=True)
 
     def training_step(self, batch, batch_idx):
         y_hat, loss = self.do_step(batch, "train")
@@ -62,6 +60,11 @@ class LitProteins(pl.LightningModule):
         self.step_log(loss, "valid")
         return loss
 
+    def test_step(self, batch, batch_idx):
+        y_hat, loss = self.do_step(batch, "test")
+        self.step_log(loss, "test")
+        return loss
+
     def training_epoch_end(self, outputs):
         avg_loss = torch.stack([out["loss"] for out in outputs]).mean()
         self.epoch_log(avg_loss, "train")
@@ -69,6 +72,10 @@ class LitProteins(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         avg_loss = torch.stack([out for out in outputs]).mean()
         self.epoch_log(avg_loss, "valid")
+
+    def test_epoch_end(self, outputs):
+        avg_loss = torch.stack([out for out in outputs]).mean()
+        self.epoch_log(avg_loss, "test")
 
     def configure_optimizers(self):
         optimizer = self.conf["optimizer"]["object"](
