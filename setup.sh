@@ -38,8 +38,9 @@ function setup_data {
   download_data;
   unzip data-stability.zip;
   tar -xvf data-parallel.tar.gz -C parallel-synthesis/;
-  tar -xvf data-mutagens.tar.gz -C mutagens/;
-  rm data-stability.zip data-mutagens.tar.gz data-parallel.tar.gz;
+  tar -xvf data-mutagenesis.tar.gz -C mutagenesis/;
+  tar -xvf data-fireprot.tar.gz -C fireprot/;
+  rm data-stability.zip data-mutagenesis.tar.gz data-parallel.tar.gz data-fireprot.tar.gz;
   return  1;
 }
 
@@ -48,9 +49,12 @@ function upload_data {
   while true; do
     if test -f "$DROPBOX_CONF"; then
       tar -czvf data-parallel.tar.gz parallel-synthesis/data/;
-      tar -czvf data-mutagens.tar.gz mutagens/data/;
-      bash dropbox_uploader.sh upload data-mutagens.tar.gz protera-data/;
+      tar -czvf data-mutagenesis.tar.gz mutagenesis/data/;
+      tar -czvf data-fireprot.tar.gz fireprot/data/;
+      bash dropbox_uploader.sh upload data-mutagenesis.tar.gz protera-data/;
       bash dropbox_uploader.sh upload data-parallel.tar.gz protera-data/;
+      bash dropbox_uploader.sh upload data-fireprot.tar.gz protera-data/;
+      rm data-mutagenesis.tar.gz data-parallel.tar.gz data-fireprot.tar.gz;
       break;
     else
       setup_dropbox;
@@ -83,6 +87,7 @@ function display_help {
 ############# MAIN PROGRAM  #############
 function main {
   while (( "$#" )); do
+    echo "$1";
     case "$1" in
       -u|--upload)
         echo "Performing upload..."; sleep 1;
@@ -90,16 +95,10 @@ function main {
         exit 0
         ;;
       -d|--download)
-        echo "Performing donwload only..."; sleep 1;
+        echo "Performing download only..."; sleep 1;
         download_data;
         exit 0
         ;;
-  #    *)
-  #      echo "Performing setup..."; sleep 1;
-  #      setup_data;
-  #      setup_dropbox;
-  #      exit 0
-  #      ;;
     esac
   done
 
