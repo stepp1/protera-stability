@@ -1,5 +1,11 @@
-import sys
 from typing import Iterator
+
+from joblib import dump
+from sklearn.metrics import r2_score
+from sklearn.model_selection import GridSearchCV
+
+scoring = "r2"
+score = r2_score
 
 import fsspec  # imported first because of pl import error
 import h5py
@@ -115,8 +121,8 @@ class ProteinStabilityDataset(torch.utils.data.Dataset):
 
         with h5py.File(str(self.stability_path), "r") as dset:
             self.sequences = dset["sequences"][:]
-            X = dset["embeddings"][:]
-            y = dset["labels"][:]
+            X = dset["embeddings"][:].astype("float32")
+            y = dset["labels"][:].astype("float32")
 
             self.X = self.x_scaler.fit_transform(X)
             self.y = self.y_scaler.fit_transform(y.reshape(-1, 1)).reshape(y.shape)
@@ -166,7 +172,7 @@ class SubsetDiversitySampler(torch.utils.data.Sampler):
         """
 
         self.diversity_path = diversity_path
-        self.diversity_data = pd.read_csv(self.diversity_path, index_col=0)
+        self.diversity_data = pd.read_csv(self.diversity_path)
         self.diversity_data = self.diversity_data[
             self.diversity_data.index.isin(set_indices)
         ]
@@ -222,3 +228,39 @@ class SubsetDiversitySampler(torch.utils.data.Sampler):
 
     def __len__(self) -> int:
         return len(self.indices)
+
+def perform_search(X, y, model, params, name, X_test=None, y_test=None, strategy="grid", save_dir="models", n_jobs=-1):
+    if strategy == "grid":
+        searcher = GridSearchCV
+
+    elif strategy == "bayes":
+        raise NotImplementedError
+
+    search = searcher(
+        estimator=model,
+        param_grid=params,
+        scoring=scoring,
+        verbose=1,
+        n_jobs=n_jobs,
+        refit=True,
+    )
+
+    print("============")
+    print(f"Fitting model {name}...")
+    search.fit(X, y)
+    print(f"{name} best R2: {search.best_score_}")
+    print(f"Best params: {search.best_params_}")
+
+    if X_test is not None and y_test is not None:
+        r2_test = search.score(X_test, y_test)
+        print(f"Test R2: {r2_test}")
+    print("============")
+
+    if "sklearn" in str(type(model)):
+        dump(search, f"{save_dir}/best_{name}.joblib")
+
+    else:
+        # this assumes we're using skorch
+        torch.save(search.state_dict(), f"{save_dir}/best_{name}.pt")
+
+    return search

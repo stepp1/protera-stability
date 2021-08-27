@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
 
-from embeddings import EmbeddingExtractor1D
+from .embeddings import EmbeddingExtractor1D
 
 
 def unwrap(x):
@@ -69,7 +69,7 @@ def dim_reduction(
     elif strategy == valid_strats[2]:
         reducer = TSNE(n_components=2)
 
-    X_hat = reducer.fit_transform(X, y)
+    X_hat = reducer.fit_transform(X)
 
     if plot_viz:
         f, ax = plt.subplots(figsize=(10, 5))
@@ -88,47 +88,27 @@ def dim_reduction(
 
     return X_hat
 
-
-def open_train_test(base_path, prefix):
-    sets = {}
-
-    for path in base_path.glob(f"{prefix}_*.csv"):
-        fname = path.stem
-        parts = fname.split("_")
-
-        if len(parts) > 2:
-            continue
-
-        kind = parts[1]
-
-        df = pd.read_csv(path)
-        cols = df.columns
-        df = df[cols[::-1]]
-        df.columns = ["labels", "sequence"]
-
-        sets[kind] = df
-
-    return sets
-
-
 def load_dataset_raw(
-    data_path, kind="train", reduce=False, scale=True, to_torch=False, close_h5=True
+    data_path, kind=None, reduce=False, scale=True, to_torch=False, close_h5=True, verbose=False
 ):
-    raise NotImplementedError("This function hasn't been updated.")
     args_dict = {
         "model_name": "esm1b_t33_650M_UR50S",
-        "open_func": open_train_test,
-        "data_path": data_path,
+        "base_path": data_path,
         "gpu": False,
     }
 
     emb_stabilty = EmbeddingExtractor1D(**args_dict)
+    task = "stability"
 
-    dset = emb_stabilty.generate_datasets("stability", kind=kind, load_embeddings=True)
+    if kind is not None:
+        task = f"{task}_{kind}"
 
-    X, y = dset["embeddings"][:].astype("float32"), dset["labels"][:].reshape(
-        -1, 1
-    ).astype("float32")
+    if verbose:
+        print(f"Using: {data_path / task}.csv, {data_path / task}.h5, {data_path / task}_embeddings.pkl")
+
+    dset = emb_stabilty.generate_datasets([f"{task}.csv"], h5_stem=task, embedding_file=f"{task}_embeddings")
+
+    X, y = dset["embeddings"][:].astype("float32"), dset["labels"][:].astype("float32")
 
     if reduce:
         X = dim_reduction(X, y, plot_viz=False)
@@ -138,7 +118,7 @@ def load_dataset_raw(
         X = scaler.fit_transform(X)
 
         scaler = StandardScaler()
-        y = scaler.fit_transform(y)
+        y = scaler.fit_transform(y.reshape(-1, 1)).reshape(y.shape)
 
     if to_torch:
         X = torch.from_numpy(X)

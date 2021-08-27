@@ -1,14 +1,15 @@
 import fsspec
 from .embeddings import EmbeddingExtractor1D
-from .models import ProteinMLP, perform_search
+from .models import ProteinMLP
 from .train import (
     AttrDict,
     LitProteins,
     ProteinStabilityDataset,
     SubsetDiversitySampler,
     LitProteins,
+    perform_search
 )
-from .utils import PrintCallback, open_train_test, dim_reduction
+from .utils import PrintCallback, load_dataset_raw, dim_reduction
 
 __all__ = [
     AttrDict,
@@ -18,7 +19,7 @@ __all__ = [
     ProteinStabilityDataset,
     SubsetDiversitySampler,
     PrintCallback,
-    open_train_test,
     perform_search,
+    load_dataset_raw,
     dim_reduction,
 ]

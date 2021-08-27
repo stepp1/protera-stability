@@ -34,7 +34,7 @@ class EmbeddingExtractor1D:
 
         self.model, self.alphabet = torch.hub.load("facebookresearch/esm", model_name)
         self.batch_converter = self.alphabet.get_batch_converter()
-        self.base_path = base_path
+        self.base_path = base_path if isinstance(base_path, Path) else Path(base_path)
         self.data = None
         self.gpu = gpu
 
@@ -67,7 +67,6 @@ class EmbeddingExtractor1D:
             data = [("0", sequence)]
         else:
             data = sequence
-
         batch_labels, batch_strs, batch_tokens = self.batch_converter(data)
         with torch.no_grad():
             if self.gpu:
@@ -190,7 +189,7 @@ class EmbeddingExtractor1D:
         embedding_to_save: List[Union[str, pathlib.Path]] = None,
         bs: int = 32,
         subset: float = None,
-        embedding_file: List[Union[str, pathlib.Path]] = None,
+        embedding_file: Union[str, pathlib.Path] = None,
         overwrite: bool = False,
         data=None,
         target_name: str = "",
@@ -258,7 +257,6 @@ class EmbeddingExtractor1D:
             embeddings = self.open_embeddings(embedding_file)
 
         h5_fname = self.base_path / f"{h5_stem}.h5"
-
         if Path(h5_fname).exists() and not overwrite:
             print("Returning existing dataset...", file=sys.stderr)
             return h5py.File(str(h5_fname), "r")
