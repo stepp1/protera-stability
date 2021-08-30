@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import Iterator, List
 
 from joblib import dump
 from sklearn.metrics import r2_score
@@ -154,7 +154,7 @@ class SubsetDiversitySampler(torch.utils.data.Sampler):
 
     def __init__(
         self,
-        set_indices: list,
+        set_sequences: List[str],
         diversity_path: str,
         diversity_cutoff: float,
         max_size: int,
@@ -174,7 +174,7 @@ class SubsetDiversitySampler(torch.utils.data.Sampler):
         self.diversity_path = diversity_path
         self.diversity_data = pd.read_csv(self.diversity_path)
         self.diversity_data = self.diversity_data[
-            self.diversity_data.index.isin(set_indices)
+            self.diversity_data.sequence.isin(set_sequences)
         ]
 
         if strategy == "maximize":
@@ -191,7 +191,7 @@ class SubsetDiversitySampler(torch.utils.data.Sampler):
         self.cutoff = diversity_cutoff
         self.indices = []
         self.max_size = max_size
-        self.set_indices = set_indices
+        self.set_indices = list(self.diversity_data.index)
         self.strategy = strategy
         self.seed = seed
 
