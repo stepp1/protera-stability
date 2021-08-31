@@ -1,7 +1,7 @@
 # custom ignore:
 .ipynb_checkpoints/
 .vscode/
-data/
+project/*/data/
 models/
 logs/
 lightning_logs/
