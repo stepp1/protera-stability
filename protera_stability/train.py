@@ -29,14 +29,13 @@ def setup_diversity(diversity_cutoff: float, random_percent: float, sequence_sam
     conf.experiment.diversity_cutoff = diversity_cutoff
     conf.experiment.random_percent = random_percent
     conf.experiment.model = L(ProteinMLP)(
-        n_in: int,
-        n_units: int,
-        n_layers: 3,
-        act = L(torch.nn.LeakyRelu.),
+        n_in=1280,
+        n_units=int,
+        n_layers= 3,
+        act = L(torch.nn.LeakyRelu)(),
         drop_p = 0.7,
         last_drop = False
     )
-
 
 
 def setup_data(conf, base_dataset = base_dataset, base_sampler = base_sampler, base_dl = base_dataloader):
