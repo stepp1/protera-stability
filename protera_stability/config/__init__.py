@@ -3,7 +3,9 @@ from .instantiate import instantiate
 from .lazy import LazyCall, LazyConfig
 
 __all__ = [
-    "instantiate",
     "LazyCall",
     "LazyConfig",
+    "instantiate",
 ]
+
+assert __all__ == sorted(__all__)
