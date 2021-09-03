@@ -1,22 +1,38 @@
 import copy
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pandas as pd
 import pytorch_lightning as pl
-import torchmetrics
 import torch
+import torchmetrics
 from IPython.display import clear_output, display
+from protera_stability.config.instantiate import instantiate
+from protera_stability.config.lazy import LazyCall as L
 from pytorch_lightning import Callback
+from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor,
+                                         ModelCheckpoint)
 from torch.nn import functional as F
 
 
-class LitProteins(pl.LightningModule):
+class TrainingLit(pl.LightningModule):
     """Training Protein Stability Regression Model"""
 
     # For ddp see: https://torchmetrics.readthedocs.io/en/latest/pages/lightning.html#logging-torchmetrics
-    def __init__(self, model: torch.nn.Module, hparams: dict) -> Dict[str, Any]:
-        super(LitProteins, self).__init__()
+    def __init__(
+        self,
+        cfg,
+        model: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        schedulers: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        super(TrainingLit, self).__init__()
+
+        self.cfg = cfg
+
         self.model = model
+        self.optim = optimizer
+        self.lr_scheds = schedulers
+
         self.train_r2 = torchmetrics.R2Score()
         self.valid_r2 = torchmetrics.R2Score().clone()
         self.test_r2 = torchmetrics.R2Score().clone()
@@ -27,8 +43,8 @@ class LitProteins(pl.LightningModule):
             "test": self.test_r2,
         }
 
+        hparams = self.cfg["experiment"]
         self.save_hyperparameters(hparams)
-        self.conf = hparams
         # self.logger.log_hyperparams(params=hparams, metrics={})
 
     def forward(self, x):
@@ -39,15 +55,15 @@ class LitProteins(pl.LightningModule):
         X, y = batch
         y_hat = self.model(X)
         loss = F.mse_loss(y_hat, y)
-        return {"loss": loss, "y_hat": y_hat, "y": y}
+        return {"loss": loss, "y_hat": y_hat.detach(), "y": y}
 
     def step_log(self, outputs, stage):
-        self.r2["stage"](outputs["y_hat"], outputs["y"])
-        self.log(f"{stage}/r2_step", self.r2["stage"])
+        self.r2[stage](outputs["y_hat"], outputs["y"])
+        self.log(f"{stage}/r2_step", self.r2[stage])
         self.log(f"{stage}/loss_step", outputs["loss"], prog_bar=False, on_epoch=False)
 
     def epoch_log(self, avg_loss, stage):
-        self.log(f"{stage}/r2", self.r2["stage"].compute(), prog_bar=True)
+        self.log(f"{stage}/r2", self.r2[stage].compute(), prog_bar=True)
         self.log(f"{stage}/loss", avg_loss, on_step=False, on_epoch=True, prog_bar=True)
 
     def training_step(self, batch, batch_idx):
@@ -76,33 +92,43 @@ class LitProteins(pl.LightningModule):
         self.epoch_log(avg_loss, "train")
 
     def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([out for out in outputs]).mean()
+        avg_loss = torch.stack([out["loss"] for out in outputs]).mean()
         self.epoch_log(avg_loss, "valid")
 
     def test_epoch_end(self, outputs):
-        avg_loss = torch.stack([out for out in outputs]).mean()
+        avg_loss = torch.stack([out["loss"] for out in outputs]).mean()
         self.epoch_log(avg_loss, "test")
 
     def configure_optimizers(self):
-        optimizer = self.conf["optimizer"]["object"](
-            self.model.parameters(), **self.conf["optimizer"]["params"]
-        )
+        optimizer = self.optim
+        # lr_schedulers = []
+        # for scheduler in self.lr_scheds:
+        #     print(scheduler)
+        #     scheduler_dict = {
+        #         "scheduler": scheduler["scheduler"],
+        #         "monitor": "valid/loss",
+        #         "interval": scheduler["interval"]
+        #     }
+        #     lr_schedulers.append(scheduler_dict)
+        return [optimizer], self.lr_scheds
 
-        schedulers = [
-            (sched["object"](optimizer, **sched["params"]), sched["name"])
-            for sched in self.conf["optimizer"]["schedulers"]
-        ]
 
-        lr_schedulers = []
-        for schedule, name in schedulers:
-            scheduler_dict = {
-                "scheduler": schedule,
-                "monitor": "valid_loss_epoch",
-                "name": name,
-            }
-            lr_schedulers.append(scheduler_dict)
+LitProteins = TrainingLit
 
-        return [optimizer], lr_schedulers
+
+class DataModule(pl.LightningDataModule):
+    def __init__(self, cfg):
+        super().__init__()
+        self.cfg = cfg
+
+    def train_dataloader(self):
+        return instantiate(self.cfg.dataloader.train)
+
+    def val_dataloader(self):
+        return instantiate(self.cfg.dataloader.valid)
+
+    def test_dataloader(self):
+        return instantiate(self.cfg.dataloader.test)
 
 
 def unwrap(x):
@@ -139,3 +165,16 @@ class PrintCallback(Callback):
             ],
         )
         display(metrics_df)
+
+
+def default_cbs(ckpt_dir, lazy = False):
+    ckpt_cb = L(ModelCheckpoint)(dirpath=ckpt_dir)
+    stop_valid = L(EarlyStopping)(
+        monitor="valid/loss", patience=20, check_on_train_epoch_end=False,
+    )
+    monitor_lr = L(LearningRateMonitor)(logging_interval="epoch")
+
+    callbacks = [ckpt_cb, stop_valid, monitor_lr]
+    if not lazy:
+        callbacks = [instantiate(cb) for cb in callbacks]
+    return callbacks
