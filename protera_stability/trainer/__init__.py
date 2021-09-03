@@ -1,5 +1,10 @@
-from protera_stability.trainer.pl_trainer import LitProteins
+from protera_stability.trainer.lightning_train import (
+    default_cbs,
+    DataModule,
+    LitProteins,
+    TrainingLit,
+)
 
-__all__ = ["LitProteins"]
+__all__ = ["DataModule", "LitProteins", "TrainingLit", "default_cbs"]
 
 assert __all__ == sorted(__all__)

@@ -1,5 +1,6 @@
 from torch import nn
 
+
 class ProteinMLP(nn.Module):
     def __init__(
         self,
