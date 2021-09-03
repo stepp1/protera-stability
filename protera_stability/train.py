@@ -94,7 +94,7 @@ def setup_data(
     if cfg.experiment.sampling_method == "":
         # this is because we aren't using a "special" sampling method, therefore we directly pass the indices
         train_sampler.random.indices.set_indices = train_idx
-        train_sampler.random.indices.random_percent = 1.
+        train_sampler.random.indices.random_percent = 1.0
         train_sampler = train_sampler.random
 
     elif cfg.experiment.sampling_method == "diversity":
@@ -116,7 +116,7 @@ def setup_data(
     # just pass the indices to the sampler
     valid_sampler = copy(base_sampler)
     valid_sampler.random.indices.set_indices = valid_idx
-    valid_sampler.random.indices.random_percent = 1.
+    valid_sampler.random.indices.random_percent = 1.0
     valid_sampler = valid_sampler.random
 
     # dataloaders
@@ -156,7 +156,7 @@ def setup_train(cfg):
         ckpt_dir.mkdir()
 
     # default callbacks
-    cbs = default_cbs(ckpt_dir, lazy = True)
+    cbs = default_cbs(ckpt_dir, lazy=True)
     cfg.trainer_params["callbacks"] = cbs
     cfg.trainer_params["logger"] = L(pl_loggers.TensorBoardLogger)(save_dir=log_dir)
     return cfg
@@ -187,9 +187,9 @@ def do_train(cfg):
     cbs = cfg.trainer_params["callbacks"]
     cbs += [stop_r2_reached]
     cfg.trainer_params["callbacks"] = cbs
-    
+
     # build trainer
-    trainer_params = {k : instantiate(v) for k, v in cfg.trainer_params.items()}
+    trainer_params = {k: instantiate(v) for k, v in cfg.trainer_params.items()}
     trainer = Trainer(**trainer_params)
 
     # build model
@@ -209,13 +209,17 @@ def do_train(cfg):
 
     train_dl = data_module.train_dataloader()
     print(f"=== USING {cfg.experiment.sampling_method} as Sampling Method ===")
-    print(f"=== USING {len(train_dl.sampler)} out of {len(train_dl.dataset)} samples ===")
+    print(
+        f"=== USING {len(train_dl.sampler)} out of {len(train_dl.dataset)} samples ==="
+    )
 
     if cfg.experiment.sampling_method == "diversity":
         print(f"=== SIZE WAS DETERMINED BY {train_dl.sampler.stopped_by} ===")
 
     elif cfg.experiment.sampling_method == "random":
-        print(f"=== SIZE WAS DETERMINED BY RANDOM PERCENT OF {cfg.experiment.random_percent} ===")
+        print(
+            f"=== SIZE WAS DETERMINED BY RANDOM PERCENT OF {cfg.experiment.random_percent} ==="
+        )
 
     # fit and return
     trainer.fit(module, data_module)

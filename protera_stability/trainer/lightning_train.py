@@ -9,8 +9,11 @@ from IPython.display import clear_output, display
 from protera_stability.config.instantiate import instantiate
 from protera_stability.config.lazy import LazyCall as L
 from pytorch_lightning import Callback
-from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor,
-                                         ModelCheckpoint)
+from pytorch_lightning.callbacks import (
+    EarlyStopping,
+    LearningRateMonitor,
+    ModelCheckpoint,
+)
 from torch.nn import functional as F
 
 
@@ -167,10 +170,12 @@ class PrintCallback(Callback):
         display(metrics_df)
 
 
-def default_cbs(ckpt_dir, lazy = False):
+def default_cbs(ckpt_dir, lazy=False):
     ckpt_cb = L(ModelCheckpoint)(dirpath=ckpt_dir)
     stop_valid = L(EarlyStopping)(
-        monitor="valid/loss", patience=20, check_on_train_epoch_end=False,
+        monitor="valid/loss",
+        patience=20,
+        check_on_train_epoch_end=False,
     )
     monitor_lr = L(LearningRateMonitor)(logging_interval="epoch")
 
