@@ -3,7 +3,7 @@ import sys
 import setuptools
 
 sys.path.insert(0, "src")
-import protera_stability
+# import protera_stability
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
