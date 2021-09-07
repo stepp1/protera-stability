@@ -35,11 +35,12 @@ function download_data {
 }
 
 function setup_data {
-  download_data;
+  # download_data;
+  wget https://www.dropbox.com/sh/ifindwj2hlmyo6f/AADFUJFR_9OWMnctXckQvmlxa\?dl\=0 -O "data-stability.zip";
   unzip data-stability.zip;
-  tar -xvf data-parallel.tar.gz -C project/parallel-synthesis/;
-  tar -xvf data-mutagenesis.tar.gz -C project/mutagenesis/;
-  tar -xvf data-fireprot.tar.gz -C project/fireprot/;
+  tar -xvf data-parallel.tar.gz;
+  tar -xvf data-mutagenesis.tar.gz;
+  tar -xvf data-fireprot.tar.gz;
   rm data-stability.zip data-mutagenesis.tar.gz data-parallel.tar.gz data-fireprot.tar.gz;
   return  1;
 }
