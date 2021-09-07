@@ -32,15 +32,15 @@ def compute_diversity(seq1, seq2, method="hamming"):
 
 
 def div_vs_all(sequence, other_sequences, reducer = np.nanmean):
-        v_diversity = np.vectorize(lambda x: compute_diversity(sequence, x))
-        if len(other_sequences) > 1:
-            div_vs_all = v_diversity(other_sequences)
-        else:
-            print(f"Skipping sequence {sequence}")
-            return np.nan
+    v_diversity = np.vectorize(lambda x: compute_diversity(sequence, x))
+    if len(other_sequences) > 1:
+        div_vs_all = v_diversity(other_sequences)
+    else:
+        print(f"Skipping {sequence}")
+        return np.nan
 
-        reduced_div_vs_all = reducer(div_vs_all) if len(div_vs_all) >= 1 else np.nan
-        return reduced_div_vs_all
+    reduced_div_vs_all = reducer(div_vs_all) if len(div_vs_all) >= 1 else np.nan
+    return reduced_div_vs_all
     
 def dataset_diversity(sequences, method="hamming", reduce="mean", verbose=True):
     if reduce != "mean":
