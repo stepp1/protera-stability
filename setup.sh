@@ -49,8 +49,13 @@ function setup_data {
 function upload_data {
   while true; do
     if test -f "$DROPBOX_CONF"; then
-      tar --exclude "project/parallel_synthesis/data/raw/*" -czvf data-parallel.tar.gz project/parallel_synthesis/data/;
-      tar --exclude "project/mutagenesis/data/Protera/mmseq_*" --exclude "project/mutagenesis/data/Protera/tmp" \
+      tar --exclude "project/parallel_synthesis/data/raw/*" \
+          --exclude "project/parallel_synthesis/data/mmseq_*" \
+          --exclude "project/parallel_synthesis/data/tmp" \
+          -czvf data-parallel.tar.gz project/parallel_synthesis/data/;
+      tar --exclude "project/mutagenesis/data/Protera/mmseq_*" \
+          --exclude "project/mutagenesis/data/Protera/raw" \
+          --exclude "project/mutagenesis/data/Protera/tmp" \
           --exclude "project/mutagenesis/data/Protera/prism" \
           -czvf data-mutagenesis.tar.gz project/mutagenesis/data/Protera;
       tar -czvf data-fireprot.tar.gz project/fireprot/data/;
