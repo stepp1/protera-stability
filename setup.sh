@@ -37,9 +37,9 @@ function download_data {
 function setup_data {
   download_data;
   unzip data-stability.zip;
-  tar -xvf data-parallel.tar.gz -C parallel-synthesis/;
-  tar -xvf data-mutagenesis.tar.gz -C mutagenesis/;
-  tar -xvf data-fireprot.tar.gz -C fireprot/;
+  tar -xvf data-parallel.tar.gz -C project/parallel-synthesis/;
+  tar -xvf data-mutagenesis.tar.gz -C project/mutagenesis/;
+  tar -xvf data-fireprot.tar.gz -C project/fireprot/;
   rm data-stability.zip data-mutagenesis.tar.gz data-parallel.tar.gz data-fireprot.tar.gz;
   return  1;
 }
@@ -48,9 +48,11 @@ function setup_data {
 function upload_data {
   while true; do
     if test -f "$DROPBOX_CONF"; then
-      tar -czvf data-parallel.tar.gz parallel-synthesis/data/;
-      tar -czvf data-mutagenesis.tar.gz mutagenesis/data/;
-      tar -czvf data-fireprot.tar.gz fireprot/data/;
+      tar --exclude "project/parallel_synthesis/data/raw/*" -czvf data-parallel.tar.gz project/parallel_synthesis/data/;
+      tar --exclude "project/mutagenesis/data/Protera/mmseq_*" --exclude "project/mutagenesis/data/Protera/tmp" \
+          --exclude "project/mutagenesis/data/Protera/prism" \
+          -czvf data-mutagenesis.tar.gz project/mutagenesis/data/Protera;
+      tar -czvf data-fireprot.tar.gz project/fireprot/data/;
       bash dropbox_uploader.sh upload data-mutagenesis.tar.gz protera-data/;
       bash dropbox_uploader.sh upload data-parallel.tar.gz protera-data/;
       bash dropbox_uploader.sh upload data-fireprot.tar.gz protera-data/;
