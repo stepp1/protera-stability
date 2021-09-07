@@ -92,7 +92,7 @@ def get_cluster_diversity():
         df = pd.DataFrame()
 
         sequences = [str(record.seq) for record in SeqIO.parse(rep_seqs_pth, "fasta")]
-        sequences = np.random.choice(sequences, 3000)
+        sequences = np.random.permutation(sequences)[:3000]
         alignment = dataset_diversity(sequences, "alignment")
         hamming = dataset_diversity(sequences, "hamming")
 
