@@ -32,8 +32,8 @@ def compute_diversity(seq1, seq2, method="hamming"):
     return diversity
 
 
-def div_vs_all(sequence, other_sequences, reducer=np.nanmean):
-    v_diversity = np.vectorize(lambda x: compute_diversity(sequence, x))
+def div_vs_all(sequence, other_sequences, method="hamming", reducer=np.nanmean):
+    v_diversity = np.vectorize(lambda x: compute_diversity(sequence, x, method=method))
     if len(other_sequences) > 1:
         div_vs_all = v_diversity(other_sequences)
     else:
@@ -64,7 +64,7 @@ def dataset_diversity(sequences, method="hamming", reduce="mean", verbose=True):
         for sequence_idx, sequence in enumerate(sequences):
             other_sequences = all_other_sequences[sequence_idx]
             reduced_divs.append(
-                pool.apply_async(div_vs_all, args=(sequence, other_sequences))
+                pool.apply_async(div_vs_all, args=(sequence, other_sequences, method))
             )
 
     for idx, result in enumerate(reduced_divs):
