@@ -1,4 +1,5 @@
 import copy
+import warnings
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -128,3 +129,79 @@ def load_dataset_raw(
         dset.close()
         return X, y
     return X, y, dset
+
+
+import numpy as np
+
+def onehot_pair(u, v):
+    vocab = set(u).union(set(v))
+    mapping = {k: v for v, k in enumerate(vocab)}
+    
+    for idx, val in enumerate(u):
+        u[idx] = mapping[val]
+    
+    for idx, val in enumerate(v):
+        v[idx] = mapping[val]
+        
+    return u, v
+
+def onehot_arrays(arrays):
+    vocab = set()
+    for array in arrays[1:]:
+        vocab = vocab.union(set([char for char in array]))
+    
+    mapping = {k: v for v, k in enumerate(vocab)}
+    
+    array_final = np.empty_like(arrays)
+    for idx, string in enumerate(arrays):
+        array = np.array([char for char in string])
+        for arr_idx, val in enumerate(array):
+            array[arr_idx] = mapping[val]
+        array_final[idx] = array
+        
+    return array_final
+
+
+
+#### HAMMING ####
+def _validate_vector(u, dtype=None):
+    u = np.asarray(u, dtype=dtype)
+    return u
+
+def onehot_pair(u, v):
+    vocab = set(u).union(set(v))
+    mapping = {k: v for v, k in enumerate(vocab)}
+    
+    for idx, val in enumerate(u):
+        u[idx] = mapping[val]
+    
+    for idx, val in enumerate(v):
+        v[idx] = mapping[val]
+        
+    return u, v
+
+def onehot_arrays(arrays):
+    vocab = set()
+    for array in arrays[1:]:
+        vocab = vocab.union(set([char for char in array]))
+    
+    mapping = {k: v for v, k in enumerate(vocab)}
+    
+    array_final = np.empty_like(arrays)
+    for idx, string in enumerate(arrays):
+        array = np.array([char for char in string])
+        for arr_idx, val in enumerate(array):
+            array[arr_idx] = mapping[val]
+        array_final[idx] = array
+        
+    return array_final
+
+def hamming(u, v):
+    if np.array(u).dtype == "<U1" and np.array(v).dtype == "<U1":
+        u, v = onehot_pair(u, v)
+    u = _validate_vector(u)
+    v = _validate_vector(v)
+        
+    u_ne_v = u != v
+    
+    return np.average(u_ne_v)
