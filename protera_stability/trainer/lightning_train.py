@@ -17,7 +17,7 @@ from pytorch_lightning.callbacks import (
 from torch.nn import functional as F
 
 
-class TrainingLit(pl.LightningModule):
+class TrainingPl(pl.LightningModule):
     """Training Protein Stability Regression Model"""
 
     # For ddp see: https://torchmetrics.readthedocs.io/en/latest/pages/lightning.html#logging-torchmetrics
@@ -28,7 +28,7 @@ class TrainingLit(pl.LightningModule):
         optimizer: torch.optim.Optimizer,
         schedulers: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        super(TrainingLit, self).__init__()
+        super(TrainingPl, self).__init__()
 
         self.cfg = cfg
 
@@ -116,7 +116,7 @@ class TrainingLit(pl.LightningModule):
         return [optimizer], self.lr_scheds
 
 
-LitProteins = TrainingLit
+LitProteins = TrainingPl
 
 
 class DataModule(pl.LightningDataModule):
