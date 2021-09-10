@@ -10,7 +10,7 @@ import numpy as np
 from scipy.spatial.distance import hamming
 from Bio import pairwise2, SeqIO
 
-data_path = Path('../data/Protera')
+data_path = Path("../data")
 
 def compute_diversity(seq1, seq2, method="hamming"):
     if method == "alignment":
@@ -71,12 +71,14 @@ def dataset_diversity(sequences, method="hamming", reduce="mean", verbose=True):
         if verbose:
             pbar.update(1)
             pbar.refresh()
+
     pool.join()
 
     if verbose:
         pbar.close()
 
     return reduced_divs
+
 
 def get_cluster_diversity():
     rep_seqs = dict()
@@ -89,7 +91,8 @@ def get_cluster_diversity():
         df = pd.DataFrame()
 
         sequences = [str(record.seq) for record in SeqIO.parse(rep_seqs_pth, "fasta")]
-        sequences = np.random.permutation(sequences)[:3000]
+        print(len(sequences))
+        sequences = np.random.permutation(sequences)[:]
         # alignment = dataset_diversity(sequences, "alignment")
         hamming = dataset_diversity(sequences, "hamming")
 
@@ -108,4 +111,4 @@ if __name__ == "__main__":
     rep_seqs = get_cluster_diversity()
 
     for key, df in rep_seqs.items():
-        df.to_csv(data_path / "clustering" / f"{key}.csv", index=False)
+        df.to_csv(data_path / "clustering" / f"diversity_{key}.csv", index=False)

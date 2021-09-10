@@ -1,8 +1,15 @@
 from torch import nn
 
+
 class ProteinMLP(nn.Module):
     def __init__(
-        self, n_in=1280, n_units=1024, n_layers=3, act=None, drop_p=0.7, last_drop=False
+        self,
+        n_in: int,
+        n_units: int,
+        n_layers: int,
+        act: nn.Module,
+        drop_p: int,
+        last_drop: bool,
     ):
         super(ProteinMLP, self).__init__()
 
