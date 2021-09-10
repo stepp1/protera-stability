@@ -8,16 +8,13 @@ from protera_stability.config.common.scheduler import CosineLR
 from protera_stability.config.common.optim import AdamW
 from protera_stability.config.instantiate import instantiate
 from protera_stability.config.lazy import LazyCall as L
-from protera_stability.engine.lightning_train import (
-    DataModule,
-    TrainingPl,
-    default_cbs
-)
+from protera_stability.engine.lightning_train import DataModule, TrainingPl, default_cbs
 
 # TODO: parse args recursively
 def get_cfg(args):
     cfg = DictConfig(base_train)
     return cfg
+
 
 def setup_train(cfg):
     """
@@ -55,6 +52,7 @@ def setup_train(cfg):
     cfg.trainer_params["logger"] = L(pl_loggers.TensorBoardLogger)(save_dir=log_dir)
     return cfg
 
+
 class DefaultTrainer(object):
     def __init__(self, cfg) -> None:
         super().__init__()
@@ -76,11 +74,12 @@ class DefaultTrainer(object):
         self.scheduler = instantiate(cfg.scheduler)
 
         # build modules
-        self.module = TrainingPl(cfg, model=self.model, optimizer=self.optimizer, schedulers=[self.scheduler])
+        self.module = TrainingPl(
+            cfg, model=self.model, optimizer=self.optimizer, schedulers=[self.scheduler]
+        )
         self.data_module = DataModule(cfg)
 
-
-    def fit(self, train_loader = None, valid_dataloader = None, kwargs={}):
+    def fit(self, train_loader=None, valid_dataloader=None, kwargs={}):
         """
         Fits this Trainer with the defined lightning module and datamodule.
 
@@ -90,7 +89,7 @@ class DefaultTrainer(object):
             self
         """
         if train_loader is None and valid_dataloader is None:
-            self.trainer.fit(self.module,  datamodule=self.data_module, **kwargs)
+            self.trainer.fit(self.module, datamodule=self.data_module, **kwargs)
             return self
 
         # only check if valid dataloader is none and let pl handle the train loader
@@ -102,7 +101,7 @@ class DefaultTrainer(object):
             self.trainer.fit(self.module, train_loader, valid_dataloader, **kwargs)
             return self
 
-    def test(self, dataloaders = None, kwargs={}):
+    def test(self, dataloaders=None, kwargs={}):
         """
         Test this Trainer with the defined lightning module and datamodule.
 

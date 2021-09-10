@@ -30,7 +30,7 @@ setup(
         "pandas",
         "numpy",
         "tqdm",
-        "torch >= 1.6.0",
+        "torch>=1.6.0",
         "torchmetrics",
         "pytorch_lightning",
         "scikit-learn",
