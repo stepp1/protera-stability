@@ -1,35 +1,19 @@
 import argparse
 from copy import copy
-from pathlib import Path
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning import Trainer
 
 import torch
-from omegaconf import DictConfig, OmegaConf
-
+from omegaconf import OmegaConf
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from protera_stability.config.common.data import (
     base_dataloader,
     base_dataset,
     base_sampler,
     get_train_val_indices,
 )
-from protera_stability.config.common.optim import AdamW
-from protera_stability.config.common.scheduler import CosineLR
-from protera_stability.config.common.train import base_train
 from protera_stability.config.instantiate import instantiate
 from protera_stability.config.lazy import LazyCall as L
 from protera_stability.models import ProteinMLP
-from protera_stability.trainer.lightning_train import (
-    DataModule,
-    TrainingLit,
-    default_cbs,
-)
-
-# TODO: parse args recursively
-def get_cfg(args):
-    cfg = DictConfig(base_train)
-    return cfg
+from protera_stability.trainer.default import DefaultTrainer, get_cfg
 
 
 # TODO: SHOULD THIS BE IN configs/....py?
@@ -77,7 +61,7 @@ def setup_diversity(
     )
     return cfg
 
-
+# TODO: SHOULD THIS BE IN configs/....py?
 def setup_data(
     cfg, base_dataset=base_dataset, base_sampler=base_sampler, base_dl=base_dataloader
 ):
@@ -128,45 +112,10 @@ def setup_data(
     return cfg
 
 
-def setup_train(cfg):
-    """
-    Default Training Configuration for Protein Diversity Experiments.
-
-    Sets up optim, scheduler, trainer_params.callbacks, trainer_params.logger and trainer keys of a cfg.
-    """
-    # Wasn't setup before, then use default
-    if not "optim" in cfg.keys():
-        cfg.optim = copy(AdamW)
-
-    # Was given a custom lr
-    if "lr" in cfg.keys():
-        cfg.optim.lr = cfg.lr
-
-    # Wasn't setup before, then use default
-    if not "scheduler" in cfg.keys():
-        cfg.scheduler = copy(CosineLR)
-
-    # setup directories
-    log_dir = Path(f"{cfg.output_dir}/{cfg.experiment.name}")
-    ckpt_dir = log_dir / "models"
-
-    if not log_dir.exists():
-        # shutil.rmtree(log_dir)
-        log_dir.mkdir()
-        ckpt_dir.mkdir()
-
-    # default callbacks
-    cbs = default_cbs(ckpt_dir, lazy=True)
-    cfg.trainer_params["callbacks"] = cbs
-    cfg.trainer_params["logger"] = L(pl_loggers.TensorBoardLogger)(save_dir=log_dir)
-    return cfg
-
-
 def setup(args={}):
     cfg = get_cfg(args)
     cfg = setup_diversity(cfg)
     cfg = setup_data(cfg)
-    cfg = setup_train(cfg)
     return cfg
 
 
@@ -175,6 +124,8 @@ def do_train(cfg):
     Instantiates trainer and fits it.
 
     Sets up custom experiment parameters, in this case a specific callbacks, etc.
+
+    We currently expect the cfg to have a trainer_params key. See config/common/train.py
     """
     # Add experiment specific callbacks
     stop_r2_reached = L(EarlyStopping)(
@@ -184,30 +135,10 @@ def do_train(cfg):
         stopping_threshold=0.72,
         mode="max",
     )
-    cbs = cfg.trainer_params["callbacks"]
-    cbs += [stop_r2_reached]
-    cfg.trainer_params["callbacks"] = cbs
+    cfg.trainer_params["callbacks"] = [stop_r2_reached]
 
-    # build trainer
-    trainer_params = {k: instantiate(v) for k, v in cfg.trainer_params.items()}
-    trainer = Trainer(**trainer_params)
-
-    # build model
-    model = instantiate(cfg.model)
-
-    # build optim
-    cfg.optim.params.model = model
-    optimizer = instantiate(cfg.optim)
-
-    # build scheduler
-    cfg.scheduler.optimizer = optimizer
-    scheduler = instantiate(cfg.scheduler)
-
-    # build modules
-    module = TrainingLit(cfg, model=model, optimizer=optimizer, schedulers=[scheduler])
-    data_module = DataModule(cfg)
-
-    train_dl = data_module.train_dataloader()
+    trainer = DefaultTrainer(cfg)
+    train_dl = trainer.data_module.train_dataloader()
     print(f"=== USING {cfg.experiment.sampling_method} as Sampling Method ===")
     print(
         f"=== USING {len(train_dl.sampler)} out of {len(train_dl.dataset)} samples ==="
@@ -222,9 +153,8 @@ def do_train(cfg):
         )
 
     # fit and return
-    trainer.fit(module, data_module)
-    trainer_dict = {"trainer": trainer, "module": module, "datamodule": data_module}
-    return cfg, trainer_dict
+    trainer.fit()
+    return trainer
 
 
 def do_test(cfg, trainer_dict):
@@ -234,8 +164,8 @@ def do_test(cfg, trainer_dict):
 
 def main(args):
     cfg = setup(args)
-    cfg, trainer_dict = do_train(cfg)
-    cfg, trainer_dict = do_test(cfg, trainer_dict)
+    cfg, trainer = do_train(cfg)
+    cfg, trainer_dict = do_test(cfg, trainer)
 
     return cfg, trainer_dict
 
