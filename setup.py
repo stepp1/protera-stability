@@ -31,6 +31,7 @@ setup(
         "numpy",
         "tqdm",
         "torch >= 1.6.0",
+        "torchmetrics",
         "pytorch_lightning",
         "scikit-learn",
         "joblib",
