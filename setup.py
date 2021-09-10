@@ -1,14 +1,14 @@
 import sys
 
-import setuptools
+from setuptools import find_packages, setup
 
-sys.path.insert(0, "src")
-# import protera_stability
+sys.path.insert(0, "protera_stability")
+import protera_stability
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
     name="protera_stability",
     version="0.0.1",
     author="Victor Faraggi",
@@ -22,19 +22,21 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src"),
+    # package_dir={"": "src"},
+    packages=find_packages(),
     python_requires=">=3.6",
     install_requires=[
-        "fsspec",
         "h5py",
         "pandas",
         "numpy",
         "tqdm",
-        "torch >= 1.6.0",
+        "torch>=1.6.0",
         "torchmetrics",
         "pytorch_lightning",
         "scikit-learn",
         "joblib",
+        "cloudpickle",
+        "omegaconf>=2.1",
+        "hydra-core>=1.1",
     ],
 )
