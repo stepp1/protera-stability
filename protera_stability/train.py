@@ -13,7 +13,7 @@ from protera_stability.config.common.data import (
 from protera_stability.config.instantiate import instantiate
 from protera_stability.config.lazy import LazyCall as L
 from protera_stability.models import ProteinMLP
-from protera_stability.trainer.default import DefaultTrainer, get_cfg
+from protera_stability.engine.default import DefaultTrainer, get_cfg
 
 
 # TODO: SHOULD THIS BE IN configs/....py?

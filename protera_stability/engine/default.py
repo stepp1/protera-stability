@@ -8,7 +8,7 @@ from protera_stability.config.common.scheduler import CosineLR
 from protera_stability.config.common.optim import AdamW
 from protera_stability.config.instantiate import instantiate
 from protera_stability.config.lazy import LazyCall as L
-from protera_stability.trainer.lightning_train import (
+from protera_stability.engine.lightning_train import (
     DataModule,
     TrainingPl,
     default_cbs
