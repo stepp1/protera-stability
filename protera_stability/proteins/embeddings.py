@@ -281,6 +281,6 @@ class EmbeddingExtractor1D:
             dset_labels.attrs["target"] = target_name
             dset_labels[:] = self.data.labels
             dset_embeddings[:] = list(embeddings.values())
-            dset_seqs[:] = self.data.sequence.astype(str)
+            dset_seqs[:] = self.data.sequences.astype(str)
 
         return h5py.File(str(h5_fname), "r")
