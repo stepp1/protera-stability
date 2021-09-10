@@ -55,7 +55,7 @@ def setup_diversity(
         n_in=1280,
         n_units=2048,
         n_layers=3,
-        act=L(torch.nn.LeakyReLU)(),
+        act=L(torch.nn.GELU)(),
         drop_p=0.7,
         last_drop=False,
     )
@@ -64,14 +64,14 @@ def setup_diversity(
 
 # TODO: SHOULD THIS BE IN configs/....py?
 def setup_data(
-    cfg, base_dataset=base_dataset, base_sampler=base_sampler, base_dl=base_dataloader
+    cfg, base_sampler=base_sampler, base_dl=base_dataloader
 ):
     """
     Default Data Configuration for Protein Diversity Experiments.
 
     Sets up the dataloader key of a cfg.
     """
-    dataset = instantiate(base_dataset.data)
+    dataset = instantiate(base_dataloader.train)
     train_idx, valid_idx = get_train_val_indices(dataset, cfg.experiment.random_split)
 
     # Check training sampling
@@ -158,17 +158,17 @@ def do_train(cfg):
     return trainer
 
 
-def do_test(cfg, trainer_dict):
-    trainer_dict["trainer"].test(datamodule=trainer_dict["datamodule"])
-    return cfg, trainer_dict
+def do_test(cfg, trainer):
+    trainer.test(datamodule=trainer.datamodule)
+    return cfg, trainer
 
 
 def main(args):
     cfg = setup(args)
     cfg, trainer = do_train(cfg)
-    cfg, trainer_dict = do_test(cfg, trainer)
+    cfg, trainer = do_test(cfg, trainer)
 
-    return cfg, trainer_dict
+    return cfg, trainer
 
 
 if __name__ == "__main__":
