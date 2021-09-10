@@ -1,4 +1,4 @@
-from protera_stability.trainer.lightning_train import (
+from protera_stability.engine.lightning_train import (
     default_cbs,
     DataModule,
     LitProteins,
