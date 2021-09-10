@@ -9,10 +9,12 @@ from protera_stability.utils import dim_reduction
 class ProteinStabilityDataset(torch.utils.data.Dataset):
     """Protein1D Stability Dataset."""
 
-    def __init__(self, proteins_path, ret_dict=False):
+    def __init__(self, proteins_path, on_the_fly=False, ret_dict=False):
         """
         Args:
             proteins_path (string): Path to the H5Py file that contains sequences and embeddings.
+            on_the_fly (string): If True, it will compute the sequence embeddings when the data is requested. 
+                                 Otherwise, it will open the corresponding h5.
             ret_dict (bool): If True, it will return a dictionary as batch. Otherwise, X and y tensors will be returned.
         """
         self.stability_path = proteins_path
@@ -20,15 +22,24 @@ class ProteinStabilityDataset(torch.utils.data.Dataset):
         self.x_scaler = preprocessing.StandardScaler()
         self.y_scaler = preprocessing.StandardScaler()
 
-        with h5py.File(str(self.stability_path), "r") as dset:
-            self.sequences = dset["sequences"][:]
-            X = dset["embeddings"][:].astype("float32")
-            y = dset["labels"][:].astype("float32")
+        if on_the_fly:
+            self.X = self._X_on_the_fly()
 
-            self.X = self.x_scaler.fit_transform(X)
-            self.y = self.y_scaler.fit_transform(y.reshape(-1, 1)).reshape(y.shape)
+        else:
+            with h5py.File(str(self.stability_path), "r") as dset:
+                self.sequences = dset["sequences"][:]
+                X = dset["embeddings"][:].astype("float32")
+                y = dset["labels"][:].astype("float32")
+
+                self.X = self.x_scaler.fit_transform(X)
+                self.y = self.y_scaler.fit_transform(y.reshape(-1, 1)).reshape(y.shape)
 
         self.indices = list(range(len(self.X)))
+
+    #TODO
+    def _X_on_the_fly(self):
+        raise NotImplementedError
+        return OnTheFlyExtractor()
 
     def __len__(self):
         return len(self.indices)
