@@ -36,10 +36,13 @@ class EmbeddingExtractor1D:
         self.batch_converter = self.alphabet.get_batch_converter()
         self.base_path = base_path if isinstance(base_path, Path) else Path(base_path)
         self.data = None
-        self.gpu = gpu
+        self.device = gpu
 
-        if self.gpu:
-            self.model.cuda()
+        if self.device:
+            self.device = "cuda" if isinstance(self.device, bool) else self.device
+        else:
+            self.device = "cpu"
+        self.model.to(self.device)
 
     def open_embeddings(self, filename: str) -> Dict[str, np.ndarray]:
         """
@@ -69,8 +72,7 @@ class EmbeddingExtractor1D:
             data = sequence
         batch_labels, batch_strs, batch_tokens = self.batch_converter(data)
         with torch.no_grad():
-            if self.gpu:
-                batch_tokens = batch_tokens.cuda()
+            batch_tokens = batch_tokens.to(self.device)
             predictions = self.model(batch_tokens, repr_layers=[33])
         return predictions
 

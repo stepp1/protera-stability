@@ -30,7 +30,7 @@ class SubsetDiversitySampler(torch.utils.data.Sampler):
         self.diversity_path = diversity_path
         self.diversity_data = pd.read_csv(self.diversity_path)
         self.diversity_data = self.diversity_data[
-            self.diversity_data.sequence.isin(set_sequences)
+            self.diversity_data.sequences.isin(set_sequences)
         ]
 
         if strategy == "maximize":
@@ -78,7 +78,7 @@ class SubsetDiversitySampler(torch.utils.data.Sampler):
                 break
             else:
                 indices.append(row.Index)
-                sequences.append(row.sequence)
+                sequences.append(row.sequences)
 
         self.sequences = sequences
         self.indices = indices

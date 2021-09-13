@@ -71,7 +71,7 @@ def setup_data(
 
     Sets up the dataloader key of a cfg.
     """
-    dataset = instantiate(base_dataloader.train)
+    dataset = instantiate(base_dl.train.dataset)
     train_idx, valid_idx = get_train_val_indices(dataset, cfg.experiment.random_split)
 
     # Check training sampling
