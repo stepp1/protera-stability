@@ -9,12 +9,11 @@ from protera_stability.utils import dim_reduction
 class ProteinStabilityDataset(torch.utils.data.Dataset):
     """Protein1D Stability Dataset."""
 
-    def __init__(self, proteins_path, on_the_fly=False, ret_dict=False):
+    def __init__(self, proteins_path, on_the_fly_getter=None, ret_dict=False):
         """
         Args:
             proteins_path (string): Path to the H5Py file that contains sequences and embeddings.
-            on_the_fly (string): If True, it will compute the sequence embeddings when the data is requested. 
-                                 Otherwise, it will open the corresponding h5.
+            on_the_fly_getter (cls): If not None, it will instantiate an object that computes an X's item on the fly. 
             ret_dict (bool): If True, it will return a dictionary as batch. Otherwise, X and y tensors will be returned.
         """
         self.stability_path = proteins_path
@@ -22,8 +21,10 @@ class ProteinStabilityDataset(torch.utils.data.Dataset):
         self.x_scaler = preprocessing.StandardScaler()
         self.y_scaler = preprocessing.StandardScaler()
 
-        if on_the_fly:
-            self.X = self._X_on_the_fly()
+        if on_the_fly_getter is not None:
+            getter = self.on_the_fly_getter()
+            self.X = getter.X()
+            self.y = getter.y()
 
         else:
             with h5py.File(str(self.stability_path), "r") as dset:
@@ -35,11 +36,6 @@ class ProteinStabilityDataset(torch.utils.data.Dataset):
                 self.y = self.y_scaler.fit_transform(y.reshape(-1, 1)).reshape(y.shape)
 
         self.indices = list(range(len(self.X)))
-
-    #TODO
-    def _X_on_the_fly(self):
-        raise NotImplementedError
-        return OnTheFlyExtractor()
 
     def __len__(self):
         return len(self.indices)
