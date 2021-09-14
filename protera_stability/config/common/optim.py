@@ -29,7 +29,7 @@ SGD = L(torch.optim.SGD)(
         # params.model is meant to be set to the model object, before instantiating
         # the optimizer.
     ),
-    lr=0.02,
+    lr=2e-2,
     momentum=0.9,
     weight_decay=1e-4,
 )
