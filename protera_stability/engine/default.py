@@ -3,6 +3,7 @@ from pathlib import Path
 from omegaconf.dictconfig import DictConfig
 from pytorch_lightning import Trainer
 from pytorch_lightning import loggers as pl_loggers
+import torch
 from protera_stability.config.common.train import base_train
 from protera_stability.config.common.scheduler import CosineLR
 from protera_stability.config.common.optim import AdamW
