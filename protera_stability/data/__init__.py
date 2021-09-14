@@ -1,6 +1,6 @@
 from protera_stability.data.sampler import SubsetDiversitySampler
-from protera_stability.data.dataset import ProteinStabilityDataset
+from protera_stability.data.dataset import EmbeddingGetter, ProteinStabilityDataset
 
-__all__ = ["ProteinStabilityDataset", "SubsetDiversitySampler"]
+__all__ = ["EmbeddingGetter", "ProteinStabilityDataset", "SubsetDiversitySampler"]
 
 assert __all__ == sorted(__all__)
