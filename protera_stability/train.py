@@ -1,3 +1,5 @@
+import dill
+import pickle
 import argparse
 from copy import copy
 
@@ -64,14 +66,14 @@ def setup_diversity(
 
 # TODO: SHOULD THIS BE IN configs/....py?
 def setup_data(
-    cfg, base_sampler=base_sampler, base_dl=base_dataloader
+    cfg, base_sampler=base_sampler, base_dl=base_dataloader, dataset=None
 ):
     """
     Default Data Configuration for Protein Diversity Experiments.
 
     Sets up the dataloader key of a cfg.
     """
-    dataset = instantiate(base_dl.train.dataset)
+    dataset = instantiate(base_dl.train.dataset) if dataset is None else dataset
     train_idx, valid_idx = get_train_val_indices(dataset, cfg.experiment.random_split)
 
     # Check training sampling
