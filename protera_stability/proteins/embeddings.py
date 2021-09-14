@@ -244,12 +244,15 @@ class EmbeddingExtractor1D:
             else pd.concat([pd.read_csv(self.base_path / file) for file in files])
         )
 
+        h5_fname = self.base_path / f"{h5_stem}.h5"
+        if Path(h5_fname).exists() and not overwrite:
+            print("Returning existing dataset...", file=sys.stderr)
+            return h5py.File(str(h5_fname), "r")
+
         if embedding_file is None:
             embeddings = self.generate_embeddings(
                 files,
-                path_out=None
-                if embedding_to_save is not None
-                else self.base_path / embedding_to_save,
+                path_out=self.base_path / embedding_to_save if embedding_to_save is not None else None,
                 bs=bs,
                 subset=subset,
                 data=data,
@@ -257,11 +260,6 @@ class EmbeddingExtractor1D:
 
         else:
             embeddings = self.open_embeddings(embedding_file)
-
-        h5_fname = self.base_path / f"{h5_stem}.h5"
-        if Path(h5_fname).exists() and not overwrite:
-            print("Returning existing dataset...", file=sys.stderr)
-            return h5py.File(str(h5_fname), "r")
 
         n_samples = len(embeddings)
 
