@@ -89,7 +89,6 @@ base_sampler.diversity = L(SubsetDiversitySampler)(
 
 base_sampler.random = L(torch.utils.data.SubsetRandomSampler)(
     indices=L(get_random_indices)(
-        dataset=base_dataset.data,
         set_indices=L(get_dataset_indices)(dataset=base_dataset.data),
         random_percent=0.3,
     )

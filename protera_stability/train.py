@@ -6,6 +6,7 @@ from copy import copy
 import torch
 from omegaconf import OmegaConf
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from protera_stability.config.common import data
 from protera_stability.config.common.data import (
     base_dataloader,
     base_dataset,
@@ -91,8 +92,8 @@ def setup_data(
         train_sampler = train_sampler.diversity
 
     elif cfg.experiment.sampling_method == "random":
-        train_sampler.random.indices.dataset = dataset
         train_sampler.random.indices.set_indices = train_idx
+        train_sampler.random.indices.random_percent = cfg.experiment.random_percent
         train_sampler = train_sampler.random
 
     else:
@@ -108,7 +109,9 @@ def setup_data(
 
     # dataloaders
     dataloder = copy(base_dl)
+    dataloder.train.dataset = dataset
     dataloder.train.sampler = train_sampler
+    dataloder.valid.dataset = dataset
     dataloder.valid.sampler = valid_sampler
 
     cfg.dataloader = dataloder
