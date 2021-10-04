@@ -12,6 +12,7 @@ from Bio import pairwise2, SeqIO
 
 data_path = Path("../data")
 
+
 def compute_diversity(seq1, seq2, method="hamming"):
     if method == "alignment":
         method = pairwise2.align.globalxx

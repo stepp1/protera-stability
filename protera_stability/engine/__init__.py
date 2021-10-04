@@ -6,6 +6,14 @@ from protera_stability.engine.lightning_train import (
     TrainingPl,
 )
 
-__all__ = ["DataModule", "DefaultTrainer", "LitProteins", "TrainingPl", "default_cbs", "get_cfg", "setup_train"]
+__all__ = [
+    "DataModule",
+    "DefaultTrainer",
+    "LitProteins",
+    "TrainingPl",
+    "default_cbs",
+    "get_cfg",
+    "setup_train",
+]
 
 assert __all__ == sorted(__all__)
