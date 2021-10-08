@@ -122,6 +122,7 @@ class EmbeddingExtractor1D:
         bs: int = 32,
         subset: float = None,
         data: pd.DataFrame = None,
+        verbose: bool = False
     ) -> Dict[str, np.ndarray]:
         """
         Generates sequence/token embeddings for a whole dataset.
@@ -166,16 +167,21 @@ class EmbeddingExtractor1D:
         )
 
         embeddings = {}
+        n_samples = 0
         for batch in tqdm(dl):
             batch_embeddings = self.get_embedding(batch)
             i = 0
             if len(batch_embeddings.shape) == 2:
                 for (label, seq), emb in zip(batch, batch_embeddings):
-                    i += 1
                     embeddings[seq] = emb
+                    i += 1
             else:
                 label, seq = zip(*batch)
                 embeddings[seq[0]] = batch_embeddings
+                i += 1
+            n_samples += i
+            if verbose: print(n_samples)
+        if verbose: print(n_samples)   
 
         if path_out is not None:
             out_fname = self.base_path / f"{path_out}.pkl"

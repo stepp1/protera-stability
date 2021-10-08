@@ -1,6 +1,7 @@
 from joblib import dump
 from sklearn.metrics import r2_score
 from sklearn.model_selection import GridSearchCV
+from skopt import BayesSearchCV
 import torch
 from pytorch_lightning.callbacks import (
     EarlyStopping,
@@ -24,20 +25,23 @@ def perform_search(
     save_dir="models",
     n_jobs=-1,
 ):
+
+    searcher_params = {
+        "estimator": model,
+        "scoring": scoring,
+        "verbose": 1,
+        "n_jobs": n_jobs,
+        "refit": True
+    }
     if strategy == "grid":
         searcher = GridSearchCV
+        searcher_params["param_grid"] = params
 
     elif strategy == "bayes":
-        raise NotImplementedError
+        searcher = BayesSearchCV
+        searcher_params["search_spaces"] = params
 
-    search = searcher(
-        estimator=model,
-        param_grid=params,
-        scoring=scoring,
-        verbose=1,
-        n_jobs=n_jobs,
-        refit=True,
-    )
+    search = searcher(**searcher_params)
 
     print("============")
     print(f"Fitting model {name}...")
