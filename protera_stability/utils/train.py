@@ -23,13 +23,14 @@ def perform_search(
     y_test=None,
     strategy="grid",
     save_dir="models",
+    verbose=1,
     n_jobs=-1,
 ):
 
     searcher_params = {
         "estimator": model,
         "scoring": scoring,
-        "verbose": 1,
+        "verbose": verbose,
         "n_jobs": n_jobs,
         "refit": True
     }
