@@ -56,7 +56,6 @@ function upload_data {
       tar --exclude "project/mutagenesis/data/Protera/mmseq_*" \
           --exclude "project/mutagenesis/data/Protera/raw" \
           --exclude "project/mutagenesis/data/Protera/tmp" \
-          --exclude "project/mutagenesis/data/Protera/prism" \
           -czvf data-mutagenesis.tar.gz project/mutagenesis/data/Protera;
       tar -czvf data-fireprot.tar.gz project/fireprot/data/;
       bash dropbox_uploader.sh upload data-mutagenesis.tar.gz protera-data/;
