@@ -1,6 +1,6 @@
 from joblib import dump
 from sklearn.metrics import r2_score
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from skopt import BayesSearchCV
 import torch
 from pytorch_lightning.callbacks import (
@@ -22,6 +22,7 @@ def perform_search(
     X_test=None,
     y_test=None,
     strategy="grid",
+    prefix="best_",
     save_dir="models",
     verbose=1,
     n_jobs=-1,
@@ -42,6 +43,10 @@ def perform_search(
         searcher = BayesSearchCV
         searcher_params["search_spaces"] = params
 
+    elif strategy == "random":
+        searcher = RandomizedSearchCV
+        searcher_params["param_distributions"] = params
+
     search = searcher(**searcher_params)
 
     print("============")
@@ -56,11 +61,11 @@ def perform_search(
     print("============")
 
     if "sklearn" in str(type(model)):
-        dump(search, f"{save_dir}/best_{name}.joblib")
+        dump(search, f"{save_dir}/{prefix}_{name}.joblib")
 
     else:
         # this assumes we're using skorch
-        torch.save(search.state_dict(), f"{save_dir}/best_{name}.pt")
+        torch.save(search.state_dict(), f"{save_dir}/{prefix}_{name}.pt")
 
     return search
 
