@@ -10,7 +10,8 @@ import numpy as np
 from scipy.spatial.distance import hamming
 from Bio import pairwise2, SeqIO
 
-data_path = Path('../data/Protera')
+data_path = Path("../data/Protera")
+
 
 def compute_diversity(seq1, seq2, method="hamming"):
     if method == "alignment":
@@ -31,12 +32,12 @@ def compute_diversity(seq1, seq2, method="hamming"):
     return diversity
 
 
-def div_vs_all(sequence, other_sequences, method="hamming", reducer=np.nanmean):
-    v_diversity = np.vectorize(lambda x: compute_diversity(sequence, x, method=method))
+def div_vs_all(sequence, other_sequences, reducer=np.nanmean):
+    v_diversity = np.vectorize(lambda x: compute_diversity(sequence, x))
     if len(other_sequences) > 1:
         div_vs_all = v_diversity(other_sequences)
     else:
-        print(f"Skipping {sequence}")
+        print(f"Skipping sequence {sequence}")
         return np.nan
 
     reduced_div_vs_all = reducer(div_vs_all) if len(div_vs_all) >= 1 else np.nan
@@ -63,7 +64,7 @@ def dataset_diversity(sequences, method="hamming", reduce="mean", verbose=True):
         for sequence_idx, sequence in enumerate(sequences):
             other_sequences = all_other_sequences[sequence_idx]
             reduced_divs.append(
-                pool.apply_async(div_vs_all, args=(sequence, other_sequences, method))
+                pool.apply_async(div_vs_all, args=(sequence, other_sequences))
             )
 
     for idx, result in enumerate(reduced_divs):
@@ -77,6 +78,7 @@ def dataset_diversity(sequences, method="hamming", reduce="mean", verbose=True):
         pbar.close()
 
     return reduced_divs
+
 
 def get_cluster_diversity():
     rep_seqs = dict()
@@ -108,4 +110,4 @@ if __name__ == "__main__":
     rep_seqs = get_cluster_diversity()
 
     for key, df in rep_seqs.items():
-        df.to_csv(data_path / "clustering" / f"{key}.csv", index=False)
+        df.to_csv(f"{key}.csv", index=False)
